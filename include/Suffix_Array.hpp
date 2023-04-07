@@ -46,6 +46,9 @@ public:
     Suffix_Array(const char* str, std::size_t n);
 
     ~Suffix_Array();
+
+    // Constructs the suffix array and the LCP array.
+    void construct();
 };
 
 }

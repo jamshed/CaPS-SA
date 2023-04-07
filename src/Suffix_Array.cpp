@@ -101,4 +101,19 @@ void Suffix_Array::merge_sort(idx_t* const X, idx_t* const Y, const idx_t n, idx
     }
 }
 
+
+void Suffix_Array::construct()
+{
+    idx_t* const SA_w = static_cast<idx_t*>(std::malloc(n * sizeof(idx_t)));    // Working space for the SA construction.
+    idx_t* const LCP_w = static_cast<idx_t*>(std::malloc(n * sizeof(idx_t)));   // Working space for the LCP construction.
+
+    for(idx_t i = 0; i < n; ++i)
+        SA[i] = SA_w[i] = i;
+
+    merge_sort(SA_w, SA, n, LCP, LCP_w);
+
+    std::free(SA_w);
+    std::free(LCP_w);
+}
+
 }
