@@ -33,3 +33,6 @@
 
 # Build
 build/
+
+# Julian Shun's SA library
+suffixTree
