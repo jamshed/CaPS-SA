@@ -6,7 +6,8 @@ if [ ! -z "$1" ]; then
     N=$1
 fi
 
-TRUE_PROGRAM="../simple_baseline"
+#TRUE_PROGRAM="../simple_baseline"
+TRUE_PROGRAM="../suffixTree/suffixArray"
 TEST_PROGRAM="../simple_baseline"
 
 # Step 1: generate a random string of length N
@@ -28,6 +29,9 @@ program1_output=$(cat $tempout1)
 program2_output=$(cat $tempout2)
 #IFS has to be empty for newlines to stick around...
 IFS=
+#echo $program1_output
+#echo $program2_output
+
 # Step 4: verify that both programs have the same output
 if [ "$program1_output" = "$program2_output" ]; then
   result="\033[32mcorrect\033[0m"
