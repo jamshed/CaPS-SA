@@ -17,6 +17,14 @@ Themis is a simple and parallel Suffix Array and LCP array construction algorith
 
   This installs Themis in a sub-directory named `bin`, inside the project root directory.
 
+## Usage
+
+```bash
+themis <input_file> <output_file>
+```
+
+## Miscellaneous
+
 to compare correctness against Shun et. al.'s 2014 parallel algorithm, install via:
 
 ```
