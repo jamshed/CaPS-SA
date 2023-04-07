@@ -6,8 +6,8 @@ if [ ! -z "$1" ]; then
     N=$1
 fi
 
-TRUE_PROGRAM="../suffixTree/suffixArray"
-TEST_PROGRAM="../suffixTree/suffixArray"
+TRUE_PROGRAM="../simple_baseline"
+TEST_PROGRAM="../simple_baseline"
 
 # Step 1: generate a random string of length N
 seed=$RANDOM  # generate a random seed
@@ -26,8 +26,8 @@ program2_time=$({ time $TEST_PROGRAM $tempfile $tempout2 &> /dev/null; } 2>&1 1>
 
 program1_output=$(cat $tempout1)
 program2_output=$(cat $tempout2)
-
-#echo $program1_output
+#IFS has to be empty for newlines to stick around...
+IFS=
 # Step 4: verify that both programs have the same output
 if [ "$program1_output" = "$program2_output" ]; then
   result="\033[32mcorrect\033[0m"
