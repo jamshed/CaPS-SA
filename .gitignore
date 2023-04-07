@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+
+# Julian Shun's SA library
+
+suffixTree
