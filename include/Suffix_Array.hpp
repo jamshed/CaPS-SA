@@ -45,7 +45,12 @@ public:
     // `n`.
     Suffix_Array(const char* str, std::size_t n);
 
+    // Copy constructs the suffix array object from `other`.
+    Suffix_Array(const Suffix_Array& other);
+
     ~Suffix_Array();
+
+    const Suffix_Array& operator=(const Suffix_Array& rhs) = delete;
 
     // Constructs the suffix array and the LCP array.
     void construct();

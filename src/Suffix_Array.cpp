@@ -17,6 +17,13 @@ Suffix_Array::Suffix_Array(const char* const str, const std::size_t n):
 {}
 
 
+Suffix_Array::Suffix_Array(const Suffix_Array& other): Suffix_Array(other.str_, other.n)
+{
+    std::memcpy(SA, other.SA, n * sizeof(idx_t));
+    std::memcpy(LCP, other.LCP, n * sizeof(idx_t));
+}
+
+
 Suffix_Array::~Suffix_Array()
 {
     std::free(SA);
