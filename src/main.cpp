@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
     const std::string op_path(argv[2]);
     std::string str;
 
-    std::ifstream(ip_path) >> str;
+    std::getline(std::ifstream(ip_path), str);
 
     themis::Suffix_Array suf_arr(str.c_str(), str.length());
     suf_arr.construct();
