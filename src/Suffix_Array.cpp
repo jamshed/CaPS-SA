@@ -11,23 +11,23 @@ namespace themis
 
 Suffix_Array::Suffix_Array(const char* const str, const std::size_t n):
     str_(str),
-    n(n),
-    SA(static_cast<idx_t*>(std::malloc(n * sizeof(idx_t)))),
-    LCP(static_cast<idx_t*>(std::malloc(n * sizeof(idx_t))))
+    n_(n),
+    SA_(static_cast<idx_t*>(std::malloc(n * sizeof(idx_t)))),
+    LCP_(static_cast<idx_t*>(std::malloc(n * sizeof(idx_t))))
 {}
 
 
-Suffix_Array::Suffix_Array(const Suffix_Array& other): Suffix_Array(other.str_, other.n)
+Suffix_Array::Suffix_Array(const Suffix_Array& other): Suffix_Array(other.str_, other.n_)
 {
-    std::memcpy(SA, other.SA, n * sizeof(idx_t));
-    std::memcpy(LCP, other.LCP, n * sizeof(idx_t));
+    std::memcpy(SA_, other.SA_, n_ * sizeof(idx_t));
+    std::memcpy(LCP_, other.LCP_, n_ * sizeof(idx_t));
 }
 
 
 Suffix_Array::~Suffix_Array()
 {
-    std::free(SA);
-    std::free(LCP);
+    std::free(SA_);
+    std::free(LCP_);
 }
 
 
@@ -54,7 +54,7 @@ void Suffix_Array::merge(const idx_t* X, idx_t len_x, const idx_t* Y, idx_t len_
         else    // Compute LCP of X_i and Y_j through linear scan.
         {
             idx_t n = m;    // LCP(X_i, Y_j).
-            const idx_t max_n = this->n - std::max(X[i], Y[j]);   // Length of the shorter suffix.
+            const idx_t max_n = n_ - std::max(X[i], Y[j]);  // Length of the shorter suffix.
             while(n < max_n && str_[X[i] + n] == str_[Y[j] + n])
                 n++;
 
@@ -111,13 +111,13 @@ void Suffix_Array::merge_sort(idx_t* const X, idx_t* const Y, const idx_t n, idx
 
 void Suffix_Array::construct()
 {
-    idx_t* const SA_w = static_cast<idx_t*>(std::malloc(n * sizeof(idx_t)));    // Working space for the SA construction.
-    idx_t* const LCP_w = static_cast<idx_t*>(std::malloc(n * sizeof(idx_t)));   // Working space for the LCP construction.
+    idx_t* const SA_w = static_cast<idx_t*>(std::malloc(n_ * sizeof(idx_t)));   // Working space for the SA construction.
+    idx_t* const LCP_w = static_cast<idx_t*>(std::malloc(n_ * sizeof(idx_t)));  // Working space for the LCP construction.
 
-    for(idx_t i = 0; i < n; ++i)
-        SA[i] = SA_w[i] = i;
+    for(idx_t i = 0; i < n_; ++i)
+        SA_[i] = SA_w[i] = i;
 
-    merge_sort(SA_w, SA, n, LCP, LCP_w);
+    merge_sort(SA_w, SA_, n_, LCP_, LCP_w);
 
     std::free(SA_w);
     std::free(LCP_w);
