@@ -2,7 +2,9 @@
 #include "Suffix_Array.hpp"
 
 #include <cstdlib>
+#include <cstring>
 #include <algorithm>
+#include <cassert>
 
 namespace themis
 {
@@ -84,10 +86,19 @@ void Suffix_Array::merge(const idx_t* X, idx_t len_x, const idx_t* Y, idx_t len_
 }
 
 
-Suffix_Array::~Suffix_Array()
+void Suffix_Array::merge_sort(idx_t* const X, idx_t* const Y, const idx_t n, idx_t* const LCP, idx_t* const W) const
 {
-    std::free(suf_arr_);
-    std::free(lcp_arr_);
+    assert(std::memcmp(X, Y, n * sizeof(idx_t)) == 0);
+
+    if(n == 1)
+        LCP[0] = 0;
+    else
+    {
+        const idx_t m = n / 2;
+        merge_sort(Y, X, m, W, LCP);
+        merge_sort(Y + m, X + m, n - m, W + m, LCP + m);
+        merge(X, m, X + m, n - m, W, W + m, Y, LCP);
+    }
 }
 
 }
