@@ -22,9 +22,9 @@ private:
     typedef std::size_t idx_t;
 
     const char* const str_; // The input string.
-    const idx_t len_;   // Length of the input string.
-    idx_t* const suf_arr_;  // The suffix array.
-    idx_t* const lcp_arr_;  // The LCP array.
+    const idx_t n;  // Length of the input string.
+    idx_t* const SA;  // The suffix array.
+    idx_t* const LCP;   // The LCP array.
 
 
     // Merges the sorted collections of suffixes, `X` and `Y`, with lengths
@@ -36,8 +36,8 @@ private:
 public:
 
     // Constructs a suffix array object for the input string `str` of size
-    // `len`.
-    Suffix_Array(const char* str, std::size_t len);
+    // `n`.
+    Suffix_Array(const char* str, std::size_t n);
 
     ~Suffix_Array();
 };

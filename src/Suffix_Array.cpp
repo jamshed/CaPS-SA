@@ -7,12 +7,19 @@
 namespace themis
 {
 
-Suffix_Array::Suffix_Array(const char* const str, const std::size_t len):
+Suffix_Array::Suffix_Array(const char* const str, const std::size_t n):
     str_(str),
-    len_(len),
-    suf_arr_(static_cast<idx_t*>(std::malloc(len * sizeof(idx_t)))),
-    lcp_arr_(static_cast<idx_t*>(std::malloc(len * sizeof(idx_t))))
+    n(n),
+    SA(static_cast<idx_t*>(std::malloc(n * sizeof(idx_t)))),
+    LCP(static_cast<idx_t*>(std::malloc(n * sizeof(idx_t))))
 {}
+
+
+Suffix_Array::~Suffix_Array()
+{
+    std::free(SA);
+    std::free(LCP);
+}
 
 
 void Suffix_Array::merge(const idx_t* X, idx_t len_x, const idx_t* Y, idx_t len_y, const idx_t* LCP_x, const idx_t* LCP_y, idx_t* Z, idx_t* LCP_z) const
@@ -38,7 +45,7 @@ void Suffix_Array::merge(const idx_t* X, idx_t len_x, const idx_t* Y, idx_t len_
         else    // Compute LCP of X_i and Y_j through linear scan.
         {
             idx_t n = m;    // LCP(X_i, Y_j).
-            const idx_t max_n = len_ - std::max(X[i], Y[j]);    // Length of the shorter suffix.
+            const idx_t max_n = n - std::max(X[i], Y[j]);   // Length of the shorter suffix.
             while(n < max_n && str_[X[i] + n] == str_[Y[j] + n])
                 n++;
 
