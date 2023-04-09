@@ -3,6 +3,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
 #include <algorithm>
 #include <cassert>
 
@@ -111,6 +112,8 @@ void Suffix_Array::merge_sort(idx_t* const X, idx_t* const Y, const idx_t n, idx
 
 void Suffix_Array::construct()
 {
+    const auto t_start = now();
+
     idx_t* const SA_w = static_cast<idx_t*>(std::malloc(n_ * sizeof(idx_t)));   // Working space for the SA construction.
     idx_t* const LCP_w = static_cast<idx_t*>(std::malloc(n_ * sizeof(idx_t)));  // Working space for the LCP construction.
 
@@ -121,6 +124,9 @@ void Suffix_Array::construct()
 
     std::free(SA_w);
     std::free(LCP_w);
+
+    const auto t_end = now();
+    std::cerr << "Constructed the suffix array. Time taken: " << duration(t_end - t_start) << " seconds.\n";
 }
 
 }

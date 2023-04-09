@@ -5,6 +5,7 @@
 
 
 #include <cstddef>
+#include <chrono>
 
 
 // =============================================================================
@@ -25,6 +26,11 @@ private:
     const idx_t n_; // Length of the input string.
     idx_t* const SA_;   // The suffix array.
     idx_t* const LCP_;  // The LCP array.
+
+    // Fields for profiling time.
+    typedef std::chrono::high_resolution_clock::time_point time_point_t;
+    constexpr static auto now = std::chrono::high_resolution_clock::now;
+    constexpr static auto duration = [](const std::chrono::nanoseconds& d) { return std::chrono::duration_cast<std::chrono::duration<double>>(d).count(); };
 
 
     // Merges the sorted collections of suffixes, `X` and `Y`, with lengths
