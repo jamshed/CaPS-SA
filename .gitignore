@@ -31,8 +31,10 @@
 *.out
 *.app
 
-# Build
+# Build and binary files
 build/
+bin/
+external/
 
 # Julian Shun's SA library
 suffixTree

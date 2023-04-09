@@ -13,7 +13,7 @@ add_library(core STATIC ${PROJECT_SRC})
 
 # Include paths for the compiler.
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
-target_include_directories(core PUBLIC ${INCLUDE_DIR})
+target_include_directories(core PUBLIC ${INCLUDE_DIR} ${EXT_INCLUDE})
 
 
 # Compiler flags.
@@ -23,6 +23,9 @@ target_compile_options(core PRIVATE ${WARNING_FLAGS} ${OPTIMIZE_FLAGS})
 # Executable for the driver program.
 add_executable(${PROJECT_NAME} main.cpp)
 
+
+# Add dependency of the core to parlaylib.
+add_dependencies(core prj_parlaylib)
 
 # Link the core lib to the threads lib.
 target_link_libraries(core PRIVATE Threads::Threads)

@@ -33,6 +33,27 @@ if(NOT Threads_FOUND)
 endif()
 
 
+# External projects installer.
+include(ExternalProject)
+
+set(EXT_INCLUDE ${CMAKE_SOURCE_DIR}/external/include)
+file(MAKE_DIRECTORY ${EXT_INCLUDE})
+
+
+# Prepare the `parlay` library—a parallel algorithms programming toolkit.
+message("Build system will fetch and install parlaylib")
+ExternalProject_Add(prj_parlaylib
+    DOWNLOAD_DIR        ${CMAKE_SOURCE_DIR}/external
+    DOWNLOAD_COMMAND    git clone https://github.com/cmuparlay/parlaylib.git
+    SOURCE_DIR          ${CMAKE_SOURCE_DIR}/external/parlaylib
+    BUILD_IN_SOURCE     TRUE
+    INSTALL_DIR         ${CMAKE_SOURCE_DIR}/external
+    CONFIGURE_COMMAND   ""
+    BUILD_COMMAND       ""
+    INSTALL_COMMAND     cp -rf include/parlay ${EXT_INCLUDE}
+)
+
+
 # Default build type.
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build Type" FORCE)
