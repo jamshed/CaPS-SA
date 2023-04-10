@@ -50,6 +50,9 @@ private:
     // Initializes internal data structures for the construction algorithm.
     void initialize();
 
+    // Cleans up after the construction algorithm.
+    void clean_up();
+
 public:
 
     // Constructs a suffix array object for the input string `str` of size

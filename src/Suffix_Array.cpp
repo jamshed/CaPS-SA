@@ -17,6 +17,8 @@ Suffix_Array::Suffix_Array(const char* const str, const std::size_t n):
     n_(n),
     SA_(static_cast<idx_t*>(std::malloc(n * sizeof(idx_t)))),
     LCP_(static_cast<idx_t*>(std::malloc(n * sizeof(idx_t)))),
+    SA_w(nullptr),
+    LCP_w(nullptr),
     p_(std::getenv("PARLAY_NUM_THREADS") == nullptr ? 0 : std::atoi(std::getenv("PARLAY_NUM_THREADS")))
 {
     if(p_ == 0)
@@ -121,8 +123,18 @@ void Suffix_Array::merge_sort(idx_t* const X, idx_t* const Y, const idx_t n, idx
 
 void Suffix_Array::initialize()
 {
+    SA_w = static_cast<idx_t*>(std::malloc(n_ * sizeof(idx_t)));    // Working space for the SA construction.
+    LCP_w = static_cast<idx_t*>(std::malloc(n_ * sizeof(idx_t)));   // Working space for the LCP construction.
+
     const auto idx_init = [SA_ = SA_, SA_w = SA_w](const std::size_t i){ SA_[i] = SA_w[i] = i; };
     parlay::parallel_for(0, n_, idx_init);
+}
+
+
+void Suffix_Array::clean_up()
+{
+    std::free(SA_w);
+    std::free(LCP_w);
 }
 
 
@@ -130,14 +142,10 @@ void Suffix_Array::construct()
 {
     const auto t_start = now();
 
-    SA_w = static_cast<idx_t*>(std::malloc(n_ * sizeof(idx_t)));    // Working space for the SA construction.
-    LCP_w = static_cast<idx_t*>(std::malloc(n_ * sizeof(idx_t)));   // Working space for the LCP construction.
-
     initialize();
     merge_sort(SA_w, SA_, n_, LCP_, LCP_w);
 
-    std::free(SA_w);
-    std::free(LCP_w);
+    clean_up();
 
     const auto t_end = now();
     std::cerr << "Constructed the suffix array. Time taken: " << duration(t_end - t_start) << " seconds.\n";
