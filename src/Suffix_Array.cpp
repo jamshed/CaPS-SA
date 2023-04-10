@@ -139,7 +139,7 @@ void Suffix_Array::sort_subarrays()
         {
             merge_sort( SA_w + i * subarr_size, SA_ + i * subarr_size,
                         subarr_size + (i < p_ - 1 ? 0 : n_ % p_),
-                        LCP_, LCP_w);
+                        LCP_ + i * subarr_size, LCP_w + i * subarr_size);
         };
 
     parlay::parallel_for(0, p_, sort_subarr);
