@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <cstdlib>
 #include <algorithm>
 #include <cassert>
 
@@ -14,8 +15,15 @@ Suffix_Array::Suffix_Array(const char* const str, const std::size_t n):
     str_(str),
     n_(n),
     SA_(static_cast<idx_t*>(std::malloc(n * sizeof(idx_t)))),
-    LCP_(static_cast<idx_t*>(std::malloc(n * sizeof(idx_t))))
-{}
+    LCP_(static_cast<idx_t*>(std::malloc(n * sizeof(idx_t)))),
+    p_(std::getenv("PARLAY_NUM_THREADS") == nullptr ? 0 : std::atoi(std::getenv("PARLAY_NUM_THREADS")))
+{
+    if(p_ == 0)
+    {
+        std::cerr << "The environment variable `PARLAY_NUM_THREADS` needs to be set. Aborting.\n";
+        std::exit(EXIT_FAILURE);
+    }
+}
 
 
 Suffix_Array::Suffix_Array(const Suffix_Array& other): Suffix_Array(other.str_, other.n_)

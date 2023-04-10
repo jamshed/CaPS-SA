@@ -26,6 +26,7 @@ private:
     const idx_t n_; // Length of the input string.
     idx_t* const SA_;   // The suffix array.
     idx_t* const LCP_;  // The LCP array.
+    const std::size_t p_;   // Count of threads used in construction.
 
     // Fields for profiling time.
     typedef std::chrono::high_resolution_clock::time_point time_point_t;
