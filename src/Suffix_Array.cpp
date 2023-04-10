@@ -1,5 +1,6 @@
 
 #include "Suffix_Array.hpp"
+#include "parlay/parallel.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -118,16 +119,21 @@ void Suffix_Array::merge_sort(idx_t* const X, idx_t* const Y, const idx_t n, idx
 }
 
 
+void Suffix_Array::initialize()
+{
+    const auto idx_init = [SA_ = SA_, SA_w = SA_w](const std::size_t i){ SA_[i] = SA_w[i] = i; };
+    parlay::parallel_for(0, n_, idx_init);
+}
+
+
 void Suffix_Array::construct()
 {
     const auto t_start = now();
 
-    idx_t* const SA_w = static_cast<idx_t*>(std::malloc(n_ * sizeof(idx_t)));   // Working space for the SA construction.
-    idx_t* const LCP_w = static_cast<idx_t*>(std::malloc(n_ * sizeof(idx_t)));  // Working space for the LCP construction.
+    SA_w = static_cast<idx_t*>(std::malloc(n_ * sizeof(idx_t)));    // Working space for the SA construction.
+    LCP_w = static_cast<idx_t*>(std::malloc(n_ * sizeof(idx_t)));   // Working space for the LCP construction.
 
-    for(idx_t i = 0; i < n_; ++i)
-        SA_[i] = SA_w[i] = i;
-
+    initialize();
     merge_sort(SA_w, SA_, n_, LCP_, LCP_w);
 
     std::free(SA_w);

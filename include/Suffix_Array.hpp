@@ -26,6 +26,8 @@ private:
     const idx_t n_; // Length of the input string.
     idx_t* const SA_;   // The suffix array.
     idx_t* const LCP_;  // The LCP array.
+    idx_t* SA_w;    // Working space for the SA construction.
+    idx_t* LCP_w;   // Working space for the LCP construction.
     const std::size_t p_;   // Count of threads used in construction.
 
     // Fields for profiling time.
@@ -45,6 +47,8 @@ private:
     // not remain the same after the sort.
     void merge_sort(idx_t* X, idx_t* Y, idx_t n, idx_t* LCP, idx_t* W) const;
 
+    // Initializes internal data structures for the construction algorithm.
+    void initialize();
 
 public:
 
