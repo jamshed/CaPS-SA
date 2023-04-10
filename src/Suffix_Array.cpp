@@ -131,6 +131,21 @@ void Suffix_Array::initialize()
 }
 
 
+void Suffix_Array::sort_subarrays()
+{
+    const auto subarr_size = n_ / p_;   // Size of each subarray to be sorted independently.
+    const auto sort_subarr =
+        [&](const std::size_t i)
+        {
+            merge_sort( SA_w + i * subarr_size, SA_ + i * subarr_size,
+                        subarr_size + (i < p_ - 1 ? 0 : n_ % p_),
+                        LCP_, LCP_w);
+        };
+
+    parlay::parallel_for(0, p_, sort_subarr);
+}
+
+
 void Suffix_Array::clean_up()
 {
     std::free(SA_w);
@@ -143,7 +158,9 @@ void Suffix_Array::construct()
     const auto t_start = now();
 
     initialize();
-    merge_sort(SA_w, SA_, n_, LCP_, LCP_w);
+
+    // merge_sort(SA_w, SA_, n_, LCP_, LCP_w);  // Monolithic construction.
+    sort_subarrays();
 
     clean_up();
 

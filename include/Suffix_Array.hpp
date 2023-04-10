@@ -50,6 +50,9 @@ private:
     // Initializes internal data structures for the construction algorithm.
     void initialize();
 
+    // Sorts uniform-sized subarrays independently.
+    void sort_subarrays();
+
     // Cleans up after the construction algorithm.
     void clean_up();
 
