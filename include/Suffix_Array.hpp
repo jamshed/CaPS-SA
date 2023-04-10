@@ -5,6 +5,7 @@
 
 
 #include <cstddef>
+#include <cstdlib>
 #include <chrono>
 
 
@@ -55,6 +56,10 @@ private:
 
     // Cleans up after the construction algorithm.
     void clean_up();
+
+    // Returns pointer to a memory-allocation for `size` elements of type `T_`.
+    template <typename T_>
+    static T_* allocate(std::size_t size) { return static_cast<T_*>(std::malloc(size * sizeof(T_))); }
 
 public:
 
