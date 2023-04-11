@@ -39,6 +39,10 @@ private:
     constexpr static auto duration = [](const std::chrono::nanoseconds& d) { return std::chrono::duration_cast<std::chrono::duration<double>>(d).count(); };
 
 
+    // Returns the LCP length of `x` and `y`, where `min_len` is the length of
+    // the shorter of `x` and `y`.
+    static idx_t lcp(const char* x, const char* y, idx_t min_len);
+
     // Merges the sorted collections of suffixes, `X` and `Y`, with lengths
     // `len_x` and `len_y` and LCP arrays `LCP_x` and `LCP_y` respectively, into
     // `Z`. Also constructs `Z`'s LCP array in `LCP_z`.
@@ -95,6 +99,16 @@ public:
     // Constructs the suffix array and the LCP array.
     void construct();
 };
+
+
+inline Suffix_Array::idx_t Suffix_Array::lcp(const char* const x, const char* const y, const idx_t min_len)
+{
+    idx_t l = 0;
+    while(l < min_len && x[l] == y[l])
+        l++;
+
+    return l;
+}
 
 }
 

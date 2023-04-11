@@ -67,10 +67,8 @@ void Suffix_Array::merge(const idx_t* X, idx_t len_x, const idx_t* Y, idx_t len_
             m = l_x;
         else    // Compute LCP of X_i and Y_j through linear scan.
         {
-            idx_t n = m;    // LCP(X_i, Y_j).
             const idx_t max_n = n_ - std::max(X[i], Y[j]);  // Length of the shorter suffix.
-            while(n < max_n && str_[X[i] + n] == str_[Y[j] + n])
-                n++;
+            const idx_t n = m + lcp(str_ + (X[i] + m), str_ + (Y[j] + m), max_n - m);   // LCP(X_i, Y_j)
 
             // Whether the shorter suffix is a prefix of the longer one.
             Z[k] = (n == max_n ?    std::max(X[i], Y[j]) :
