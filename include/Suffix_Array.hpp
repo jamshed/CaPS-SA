@@ -30,6 +30,8 @@ private:
     idx_t* SA_w;    // Working space for the SA construction.
     idx_t* LCP_w;   // Working space for the LCP construction.
     const std::size_t p_;   // Count of threads used in construction.
+    idx_t* P;   // Pivots for the global suffix array.
+    const idx_t pivot_per_part; // Number of pivots to sample per subarray.
 
     // Fields for profiling time.
     typedef std::chrono::high_resolution_clock::time_point time_point_t;
@@ -53,6 +55,13 @@ private:
 
     // Sorts uniform-sized subarrays independently.
     void sort_subarrays();
+
+    // Samples `m` pivots from the sorted suffix collection `X` of size `n`
+    // into `P`.
+    static void sample_pivots(const idx_t* X, idx_t n, idx_t m, idx_t* P);
+
+    // Selects pivots for parallel merging of the sorted subarrays.
+    void select_pivots();
 
     // Cleans up after the construction algorithm.
     void clean_up();
