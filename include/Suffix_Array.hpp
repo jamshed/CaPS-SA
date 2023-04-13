@@ -67,6 +67,11 @@ private:
     // Selects pivots for parallel merging of the sorted subarrays.
     void select_pivots();
 
+    // Returns the first index `idx` into the sorted suffix collection `X` of
+    // length `n` such that `X[idx]` is strictly greater than the query string
+    // `q` of length `q_len`.
+    std::size_t upper_bound(const idx_t* X, idx_t n, const char* q, std::size_t q_len) const;
+
     // Cleans up after the construction algorithm.
     void clean_up();
 

@@ -178,6 +178,49 @@ void Suffix_Array::select_pivots()
 }
 
 
+std::size_t Suffix_Array::upper_bound(const idx_t* const X, const idx_t n, const char* const q, const std::size_t q_len) const
+{
+    // Invariant maintained: SA[l] < s < SA[r].
+
+    int64_t l = -1, r = n;  // (Exclusive-) Range of the iterations in the binary search.
+    idx_t c;    // Midpoint in each iteration.
+    idx_t soln = n; // Solution of the search.
+    idx_t lcp_l = 0, lcp_r = 0; // LCP(s, SA[l]) and LCP(s, SA[r]).
+
+    while(r - l > 1)
+    {
+        c = (l + r) / 2;
+        const char* const suf = str_ + X[c];    // The suffix at the middle.
+        const auto suf_len = n_ - X[c]; // Length of the suffix.
+
+        idx_t lcp_c = std::min(lcp_l, lcp_r);   // LCP(X[c], q).
+        const auto max_lcp = std::min(suf_len, q_len);    // Maximum possible LCP, i.e. length of the shorter string.
+        lcp_c += lcp(suf + lcp_c, q + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
+
+        if(lcp_c == max_lcp)    // One is a prefix of the other.
+        {
+            if(lcp_c == q_len)  // q is a prefix of the suffix.
+            {
+                if(q_len == suf_len)  // The query is the suffix itself.
+                    return c + 1;   // q = X[c]
+                else
+                    r = c, lcp_r = lcp_c, soln = c; // q < X[c]
+            }
+            else    // The suffix is a prefix of the query; technically impossible if the text terminates with $.
+                l = c, lcp_l = lcp_c;   // X[c] < q
+        }
+        else    // Neither is a prefix of the other.
+            if(suf[lcp_c + 1] < q[lcp_c + 1])   // X[c] < q
+                l = c, lcp_l = lcp_c;
+            else    // q < X[c]
+                r = c, lcp_r = lcp_c, soln = c;
+    }
+
+
+    return soln;
+}
+
+
 void Suffix_Array::clean_up()
 {
     std::free(SA_w);
