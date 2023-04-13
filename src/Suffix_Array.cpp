@@ -12,8 +12,8 @@
 namespace themis
 {
 
-Suffix_Array::Suffix_Array(const char* const str, const std::size_t n):
-    str_(str),
+Suffix_Array::Suffix_Array(const char* const T, const std::size_t n):
+    T_(T),
     n_(n),
     SA_(allocate<idx_t>(n_)),
     LCP_(allocate<idx_t>(n_)),
@@ -31,7 +31,7 @@ Suffix_Array::Suffix_Array(const char* const str, const std::size_t n):
 }
 
 
-Suffix_Array::Suffix_Array(const Suffix_Array& other): Suffix_Array(other.str_, other.n_)
+Suffix_Array::Suffix_Array(const Suffix_Array& other): Suffix_Array(other.T_, other.n_)
 {
     std::memcpy(SA_, other.SA_, n_ * sizeof(idx_t));
     std::memcpy(LCP_, other.LCP_, n_ * sizeof(idx_t));
@@ -68,11 +68,11 @@ void Suffix_Array::merge(const idx_t* X, idx_t len_x, const idx_t* Y, idx_t len_
         else    // Compute LCP of X_i and Y_j through linear scan.
         {
             const idx_t max_n = n_ - std::max(X[i], Y[j]);  // Length of the shorter suffix.
-            const idx_t n = m + lcp(str_ + (X[i] + m), str_ + (Y[j] + m), max_n - m);   // LCP(X_i, Y_j)
+            const idx_t n = m + lcp(T_ + (X[i] + m), T_ + (Y[j] + m), max_n - m);   // LCP(X_i, Y_j)
 
             // Whether the shorter suffix is a prefix of the longer one.
             Z[k] = (n == max_n ?    std::max(X[i], Y[j]) :
-                                    (str_[X[i] + n] < str_[Y[j] + n] ? X[i] : Y[j]));
+                                    (T_[X[i] + n] < T_[Y[j] + n] ? X[i] : Y[j]));
             LCP_z[k] = (Z[k] == X[i] ? l_x : m);
             m = n;
         }
@@ -178,7 +178,7 @@ void Suffix_Array::select_pivots()
 }
 
 
-std::size_t Suffix_Array::upper_bound(const idx_t* const X, const idx_t n, const char* const q, const std::size_t q_len) const
+std::size_t Suffix_Array::upper_bound(const idx_t* const X, const idx_t n, const char* const P, const std::size_t P_len) const
 {
     // Invariant: SA[l] < s < SA[r].
 
@@ -190,29 +190,29 @@ std::size_t Suffix_Array::upper_bound(const idx_t* const X, const idx_t n, const
     while(r - l > 1)    // Candidate matches exist.
     {
         c = (l + r) / 2;
-        const char* const suf = str_ + X[c];    // The suffix at the middle.
+        const char* const suf = T_ + X[c];  // The suffix at the middle.
         const auto suf_len = n_ - X[c]; // Length of the suffix.
 
-        idx_t lcp_c = std::min(lcp_l, lcp_r);   // LCP(X[c], q).
-        const auto max_lcp = std::min(suf_len, q_len);    // Maximum possible LCP, i.e. length of the shorter string.
-        lcp_c += lcp(suf + lcp_c, q + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
+        idx_t lcp_c = std::min(lcp_l, lcp_r);   // LCP(X[c], P).
+        const auto max_lcp = std::min(suf_len, P_len);  // Maximum possible LCP, i.e. length of the shorter string.
+        lcp_c += lcp(suf + lcp_c, P + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
 
         if(lcp_c == max_lcp)    // One is a prefix of the other.
         {
-            if(lcp_c == q_len)  // q is a prefix of the suffix.
+            if(lcp_c == P_len)  // P is a prefix of the suffix.
             {
-                if(q_len == suf_len)  // The query is the suffix itself, i.e. q = X[c]
+                if(P_len == suf_len)    // The query is the suffix itself, i.e. P = X[c]
                     return c + 1;
-                else    // q < X[c]
+                else    // P < X[c]
                     r = c, lcp_r = lcp_c, soln = c;
             }
-            else    // The suffix is a prefix of the query, so X[c] < q; technically impossible if the text terminates with $.
+            else    // The suffix is a prefix of the query, so X[c] < P; technically impossible if the text terminates with $.
                 l = c, lcp_l = lcp_c;
         }
         else    // Neither is a prefix of the other.
-            if(suf[lcp_c + 1] < q[lcp_c + 1])   // X[c] < q
+            if(suf[lcp_c + 1] < P[lcp_c + 1])   // X[c] < P
                 l = c, lcp_l = lcp_c;
-            else    // q < X[c]
+            else    // P < X[c]
                 r = c, lcp_r = lcp_c, soln = c;
     }
 

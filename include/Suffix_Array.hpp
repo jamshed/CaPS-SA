@@ -23,13 +23,13 @@ private:
 
     typedef std::size_t idx_t;
 
-    const char* const str_; // The input string.
-    const idx_t n_; // Length of the input string.
+    const char* const T_;   // The input text.
+    const idx_t n_; // Length of the input text.
     idx_t* const SA_;   // The suffix array.
     idx_t* const LCP_;  // The LCP array.
     idx_t* SA_w;    // Working space for the SA construction.
     idx_t* LCP_w;   // Working space for the LCP construction.
-    const std::size_t p_;   // Count of threads used in construction.
+    const std::size_t p_;   // Count of subproblems used in construction.
     idx_t* P;   // Pivots for the global suffix array.
     const idx_t pivot_per_part; // Number of pivots to sample per subarray.
 
@@ -68,9 +68,9 @@ private:
     void select_pivots();
 
     // Returns the first index `idx` into the sorted suffix collection `X` of
-    // length `n` such that `X[idx]` is strictly greater than the query string
-    // `q` of length `q_len`.
-    std::size_t upper_bound(const idx_t* X, idx_t n, const char* q, std::size_t q_len) const;
+    // length `n` such that `X[idx]` is strictly greater than the query pattern
+    // `P` of length `P_len`.
+    std::size_t upper_bound(const idx_t* X, idx_t n, const char* P, std::size_t P_len) const;
 
     // Cleans up after the construction algorithm.
     void clean_up();
@@ -81,9 +81,9 @@ private:
 
 public:
 
-    // Constructs a suffix array object for the input string `str` of size
+    // Constructs a suffix array object for the input text `T` of size
     // `n`.
-    Suffix_Array(const char* str, std::size_t n);
+    Suffix_Array(const char* T, std::size_t n);
 
     // Copy constructs the suffix array object from `other`.
     Suffix_Array(const Suffix_Array& other);
@@ -92,7 +92,10 @@ public:
 
     const Suffix_Array& operator=(const Suffix_Array& rhs) = delete;
 
-    // Returns the length of the string.
+    // Returns the text.
+    const char* T() const { return T_; }
+
+    // Returns the length of the text.
     std::size_t n() const { return n_; }
 
     // Returns the suffix array.
