@@ -145,7 +145,7 @@ void Suffix_Array::sort_subarrays()
                         LCP_ + i * subarr_size, LCP_w + i * subarr_size);
         };
 
-    parlay::parallel_for(0, p_, sort_subarr);
+    parlay::parallel_for(0, p_, sort_subarr, 1);
 }
 
 
