@@ -180,14 +180,14 @@ void Suffix_Array::select_pivots()
 
 std::size_t Suffix_Array::upper_bound(const idx_t* const X, const idx_t n, const char* const q, const std::size_t q_len) const
 {
-    // Invariant maintained: SA[l] < s < SA[r].
+    // Invariant: SA[l] < s < SA[r].
 
     int64_t l = -1, r = n;  // (Exclusive-) Range of the iterations in the binary search.
     idx_t c;    // Midpoint in each iteration.
     idx_t soln = n; // Solution of the search.
     idx_t lcp_l = 0, lcp_r = 0; // LCP(s, SA[l]) and LCP(s, SA[r]).
 
-    while(r - l > 1)
+    while(r - l > 1)    // Candidate matches exist.
     {
         c = (l + r) / 2;
         const char* const suf = str_ + X[c];    // The suffix at the middle.
@@ -201,13 +201,13 @@ std::size_t Suffix_Array::upper_bound(const idx_t* const X, const idx_t n, const
         {
             if(lcp_c == q_len)  // q is a prefix of the suffix.
             {
-                if(q_len == suf_len)  // The query is the suffix itself.
-                    return c + 1;   // q = X[c]
-                else
-                    r = c, lcp_r = lcp_c, soln = c; // q < X[c]
+                if(q_len == suf_len)  // The query is the suffix itself, i.e. q = X[c]
+                    return c + 1;
+                else    // q < X[c]
+                    r = c, lcp_r = lcp_c, soln = c;
             }
-            else    // The suffix is a prefix of the query; technically impossible if the text terminates with $.
-                l = c, lcp_l = lcp_c;   // X[c] < q
+            else    // The suffix is a prefix of the query, so X[c] < q; technically impossible if the text terminates with $.
+                l = c, lcp_l = lcp_c;
         }
         else    // Neither is a prefix of the other.
             if(suf[lcp_c + 1] < q[lcp_c + 1])   // X[c] < q
