@@ -32,6 +32,7 @@ private:
     const std::size_t p_;   // Count of subproblems used in construction.
     idx_t* pivot_;  // Pivots for the global suffix array.
     const idx_t pivot_per_part_;    // Number of pivots to sample per subarray.
+    idx_t* part_size_scan_; // Inclusive scan (prefix sum) of the sizes of the pivoted final partitions containing appropriate sorted sub-subarrays.
 
     // Fields for profiling time.
     typedef std::chrono::high_resolution_clock::time_point time_point_t;
@@ -76,6 +77,10 @@ private:
     // length `n` such that `X[idx]` is strictly greater than the query pattern
     // `P` of length `P_len`.
     std::size_t upper_bound(const idx_t* X, idx_t n, const char* P, std::size_t P_len) const;
+
+    // Collates the sub-subarrays delineated by the pivot locations in each
+    // sorted subarray, present in `P`, into appropriate partitions.
+    void partition_sub_subarrays(const idx_t* P);
 
     // Cleans up after the construction algorithm.
     void clean_up();

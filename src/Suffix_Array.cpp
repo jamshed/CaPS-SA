@@ -21,7 +21,8 @@ Suffix_Array::Suffix_Array(const char* const T, const std::size_t n):
     LCP_w(nullptr),
     p_(std::getenv("PARLAY_NUM_THREADS") == nullptr ? 0 : std::atoi(std::getenv("PARLAY_NUM_THREADS"))),
     pivot_(nullptr),
-    pivot_per_part_(p_ - 1)
+    pivot_per_part_(p_ - 1),
+    part_size_scan_(nullptr)
 {
     if(p_ == 0)
     {
@@ -260,12 +261,74 @@ std::size_t Suffix_Array::upper_bound(const idx_t* const X, const idx_t n, const
 }
 
 
+void Suffix_Array::partition_sub_subarrays(const idx_t* const P)
+{
+    const auto t_s = now();
+
+    part_size_scan_ = allocate<idx_t>(p_ + 1);
+
+    const auto collect_size =   // Collects the size of the `j`'th partition.
+        [&](const std::size_t j)
+        {
+            part_size_scan_[j] = 0;
+            for(std::size_t i = 0; i < p_; ++i) // For subarray `i`.
+            {
+                const auto P_i = P + i * (p_ + 1);  // Pivot collection of subarray `i`.
+                part_size_scan_[j] += (P_i[j + 1] - P_i[j]);    // Collect its `j`'th sub-subarray's size.
+            }
+        };
+
+    parlay::parallel_for(0, p_, collect_size, 1);   // Collect the individual size of each partition.
+
+
+    // Compute inclusive-scan (prefix sum) of the partition sizes.
+    idx_t curr_sum = 0;
+    for(std::size_t j = 0; j < p_; ++j) // For partition `j`.
+    {
+        const auto part_size = part_size_scan_[j];
+
+        part_size_scan_[j] = curr_sum;
+        curr_sum += part_size;
+    }
+
+    part_size_scan_[p_] = curr_sum;
+
+
+    // Collate the sorted sub-subarrays to appropriate partitions.
+    const idx_t subarr_size = n_ / p_;
+    const auto collate =    // Collates the `j`'th sub-subarray from each sorted subarray to partition `j`.
+        [&](const std::size_t j)
+        {
+            auto const Y_j = SA_w + part_size_scan_[j]; // Memory-base for partition `j`.
+            idx_t curr_idx = 0; // Current index into `Y_j`.
+
+            for(std::size_t i = 0; i < p_; ++i) // Subarray `i`.
+            {
+                const auto X_i = SA_ + i * subarr_size; // `i`'th sorted subarray.
+                const auto P_i = P + i * (p_ + 1);  // Pivot collection of subarray `i`.
+
+                const auto sub_subarr_size = P_i[j + 1] - P_i[j];   // Size of the `j`'th sub-subarray of subarray `i`.
+                std::memcpy(Y_j + curr_idx, X_i + P_i[j], sub_subarr_size * sizeof(idx_t));
+                curr_idx += sub_subarr_size;
+            }
+
+            assert(curr_idx == part_size_scan_[j + 1] - part_size_scan_[j]);
+        };
+
+    parlay::parallel_for(0, p_, collate, 1);
+
+    const auto t_e = now();
+    std::cerr << "Collated the sorted sub-subarrays into partitions. Time taken: " << duration(t_e - t_s) << " seconds.\n";
+}
+
+
 void Suffix_Array::clean_up()
 {
     std::free(SA_w);
     std::free(LCP_w);
 
     std::free(pivot_);
+    std::free(part_size_scan_);
 }
 
 
@@ -282,6 +345,7 @@ void Suffix_Array::construct()
 
     idx_t* const P = allocate<idx_t>(p_ * (p_ + 1));  // Collection of pivot locations in the subarrays.
     locate_pivots(P);
+    partition_sub_subarrays(P);
     std::free(P);
 
     clean_up();
