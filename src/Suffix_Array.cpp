@@ -290,4 +290,22 @@ void Suffix_Array::construct()
     std::cerr << "Constructed the suffix array. Time taken: " << duration(t_end - t_start) << " seconds.\n";
 }
 
+
+bool Suffix_Array::is_sorted(const idx_t* const X, const idx_t n) const
+{
+    for(std::size_t i = 1; i < n; ++i)
+    {
+        const auto x = T_ + X[i - 1], y = T_ + X[i];
+        const auto l = std::min(n_ - X[i - 1], n_ - X[i]);
+
+        for(std::size_t i = 0; i < l; ++i)
+            if(x[i] < y[i])
+                break;
+            else if(x[i] > y[i])
+                return false;
+    }
+
+    return true;
+}
+
 }

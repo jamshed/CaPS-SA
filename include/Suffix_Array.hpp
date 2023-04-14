@@ -84,6 +84,9 @@ private:
     template <typename T_>
     static T_* allocate(std::size_t size) { return static_cast<T_*>(std::malloc(size * sizeof(T_))); }
 
+    // Returns true iff `X` is a valid (partial) suffix array with size `n`.
+    bool is_sorted(const idx_t* X, idx_t n) const;
+
 public:
 
     // Constructs a suffix array object for the input text `T` of size
