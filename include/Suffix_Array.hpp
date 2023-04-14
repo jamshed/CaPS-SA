@@ -67,6 +67,11 @@ private:
     // Selects pivots for parallel merging of the sorted subarrays.
     void select_pivots();
 
+    // Locates the positions (upper-bounds) of the selected pivots in the sorted
+    // subarrays and flattens them in `P`. Besides these pivots, two flanking
+    // pivots, `0` and `|X_i|`, for each subarray `X_i` are also placed.
+    void locate_pivots(idx_t* P) const;
+
     // Returns the first index `idx` into the sorted suffix collection `X` of
     // length `n` such that `X[idx]` is strictly greater than the query pattern
     // `P` of length `P_len`.

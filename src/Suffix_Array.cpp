@@ -193,6 +193,30 @@ void Suffix_Array::select_pivots()
 }
 
 
+void Suffix_Array::locate_pivots(idx_t* const P) const
+{
+    const auto t_s = now();
+
+    const auto subarr_size = n_ / p_;   // Size of each independent sorted subarray.
+
+    const auto locate =
+        [&](const std::size_t i)
+        {
+            const auto X_i = SA_ + i * subarr_size; // The i'th subarray.
+            const auto P_i = P + i * (p_ + 1);  // Pivot locations in `X_i` are to be placed in `P_i`.
+
+            P_i[0] = 0, P_i[p_] = subarr_size + (i < p_ - 1 ? 0 : n_ % p_); // The two flanking pivot indices.
+            for(std::size_t j = 0; j < p_ - 1; ++j)
+                P_i[j + 1] = upper_bound(X_i, P_i[p_], T_ + pivot_[j], n_ - pivot_[j]);
+        };
+
+    parlay::parallel_for(0, p_, locate, 1);
+
+    const auto t_e = now();
+    std::cerr << "Located the pivots in each sorted subarray. Time taken: " << duration(t_e - t_s) << " seconds.\n";
+}
+
+
 std::size_t Suffix_Array::upper_bound(const idx_t* const X, const idx_t n, const char* const P, const std::size_t P_len) const
 {
     // Invariant: SA[l] < s < SA[r].
@@ -255,6 +279,10 @@ void Suffix_Array::construct()
     sort_subarrays();
 
     select_pivots();
+
+    idx_t* const P = allocate<idx_t>(p_ * (p_ + 1));  // Collection of pivot locations in the subarrays.
+    locate_pivots(P);
+    std::free(P);
 
     clean_up();
 
