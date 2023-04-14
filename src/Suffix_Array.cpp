@@ -20,8 +20,8 @@ Suffix_Array::Suffix_Array(const char* const T, const std::size_t n):
     SA_w(nullptr),
     LCP_w(nullptr),
     p_(std::getenv("PARLAY_NUM_THREADS") == nullptr ? 0 : std::atoi(std::getenv("PARLAY_NUM_THREADS"))),
-    P(nullptr),
-    pivot_per_part(p_ - 1)
+    pivot_(nullptr),
+    pivot_per_part_(p_ - 1)
 {
     if(p_ == 0)
     {
@@ -126,8 +126,8 @@ void Suffix_Array::initialize()
     SA_w = allocate<idx_t>(n_); // Working space for the SA construction.
     LCP_w = allocate<idx_t>(n_);    // Working space for the LCP construction.
 
-    const auto sample_count = p_ * pivot_per_part;
-    P = allocate<idx_t>(sample_count);
+    const auto sample_count = p_ * pivot_per_part_;
+    pivot_ = allocate<idx_t>(sample_count);
 
     const auto idx_init = [SA_ = SA_, SA_w = SA_w](const std::size_t i){ SA_[i] = SA_w[i] = i; };
     parlay::parallel_for(0, n_, idx_init);
@@ -159,22 +159,22 @@ void Suffix_Array::sample_pivots(const idx_t* const X, const idx_t n, const idx_
 
 void Suffix_Array::select_pivots()
 {
-    const auto sample_count = p_ * pivot_per_part;  // Total number of samples to select pivots from.
-    idx_t* const P_w = allocate<idx_t>(sample_count);   // Working space to sample pivots.
+    const auto sample_count = p_ * pivot_per_part_; // Total number of samples to select pivots from.
+    idx_t* const pivot_w = allocate<idx_t>(sample_count);   // Working space to sample pivots.
     const auto subarr_size = n_ / p_;   // Size of each sorted subarray.
 
     for(idx_t i = 0; i < p_; ++i)
         sample_pivots(  SA_ + i * subarr_size, subarr_size + (i < p_ - 1 ? 0 : n_ % p_),
-                        pivot_per_part, P + i * pivot_per_part);
+                        pivot_per_part_, pivot_ + i * pivot_per_part_);
 
     auto const temp_1 = allocate<idx_t>(sample_count), temp_2 = allocate<idx_t>(sample_count);
 
-    std::memcpy(P_w, P, sample_count * sizeof(idx_t));
-    merge_sort(P, P_w, sample_count, temp_1, temp_2);
+    std::memcpy(pivot_w, pivot_, sample_count * sizeof(idx_t));
+    merge_sort(pivot_, pivot_w, sample_count, temp_1, temp_2);
 
-    sample_pivots(P_w, sample_count, p_ - 1, P);
+    sample_pivots(pivot_w, sample_count, p_ - 1, pivot_);
 
-    std::free(P_w), std::free(temp_1), std::free(temp_2);
+    std::free(pivot_w), std::free(temp_1), std::free(temp_2);
 }
 
 
@@ -226,7 +226,7 @@ void Suffix_Array::clean_up()
     std::free(SA_w);
     std::free(LCP_w);
 
-    std::free(P);
+    std::free(pivot_);
 }
 
 

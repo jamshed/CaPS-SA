@@ -30,8 +30,8 @@ private:
     idx_t* SA_w;    // Working space for the SA construction.
     idx_t* LCP_w;   // Working space for the LCP construction.
     const std::size_t p_;   // Count of subproblems used in construction.
-    idx_t* P;   // Pivots for the global suffix array.
-    const idx_t pivot_per_part; // Number of pivots to sample per subarray.
+    idx_t* pivot_;  // Pivots for the global suffix array.
+    const idx_t pivot_per_part_;    // Number of pivots to sample per subarray.
 
     // Fields for profiling time.
     typedef std::chrono::high_resolution_clock::time_point time_point_t;
