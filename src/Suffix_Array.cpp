@@ -123,6 +123,8 @@ void Suffix_Array::merge_sort(idx_t* const X, idx_t* const Y, const idx_t n, idx
 
 void Suffix_Array::initialize()
 {
+    const auto t_s = now();
+
     SA_w = allocate<idx_t>(n_); // Working space for the SA construction.
     LCP_w = allocate<idx_t>(n_);    // Working space for the LCP construction.
 
@@ -131,11 +133,16 @@ void Suffix_Array::initialize()
 
     const auto idx_init = [SA_ = SA_, SA_w = SA_w](const std::size_t i){ SA_[i] = SA_w[i] = i; };
     parlay::parallel_for(0, n_, idx_init);
+
+    const auto t_e = now();
+    std::cerr << "Initialized required data structures. Time taken: " << duration(t_e - t_s) << " seconds.\n";
 }
 
 
 void Suffix_Array::sort_subarrays()
 {
+    const auto t_s = now();
+
     const auto subarr_size = n_ / p_;   // Size of each subarray to be sorted independently.
     const auto sort_subarr =
         [&](const std::size_t i)
@@ -146,6 +153,9 @@ void Suffix_Array::sort_subarrays()
         };
 
     parlay::parallel_for(0, p_, sort_subarr, 1);
+
+    const auto t_e = now();
+    std::cerr << "Sorted the subarrays independently. Time taken: " << duration(t_e - t_s) << " seconds.\n";
 }
 
 
@@ -159,6 +169,8 @@ void Suffix_Array::sample_pivots(const idx_t* const X, const idx_t n, const idx_
 
 void Suffix_Array::select_pivots()
 {
+    const auto t_s = now();
+
     const auto sample_count = p_ * pivot_per_part_; // Total number of samples to select pivots from.
     idx_t* const pivot_w = allocate<idx_t>(sample_count);   // Working space to sample pivots.
     const auto subarr_size = n_ / p_;   // Size of each sorted subarray.
@@ -175,6 +187,9 @@ void Suffix_Array::select_pivots()
     sample_pivots(pivot_w, sample_count, p_ - 1, pivot_);
 
     std::free(pivot_w), std::free(temp_1), std::free(temp_2);
+
+    const auto t_e = now();
+    std::cerr << "Selected the global pivots. Time taken: " << duration(t_e - t_s) << " seconds.\n";
 }
 
 
