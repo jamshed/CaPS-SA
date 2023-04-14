@@ -249,7 +249,7 @@ std::size_t Suffix_Array::upper_bound(const idx_t* const X, const idx_t n, const
                 l = c, lcp_l = lcp_c;
         }
         else    // Neither is a prefix of the other.
-            if(suf[lcp_c + 1] < P[lcp_c + 1])   // X[c] < P
+            if(suf[lcp_c] < P[lcp_c])   // X[c] < P
                 l = c, lcp_l = lcp_c;
             else    // P < X[c]
                 r = c, lcp_r = lcp_c, soln = c;
