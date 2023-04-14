@@ -324,11 +324,16 @@ void Suffix_Array::partition_sub_subarrays(const idx_t* const P)
 
 void Suffix_Array::clean_up()
 {
+    const auto t_s = now();
+
     std::free(SA_w);
     std::free(LCP_w);
 
     std::free(pivot_);
     std::free(part_size_scan_);
+
+    const auto t_e = now();
+    std::cerr << "Released the temporary data structures. Time taken: " << duration(t_e - t_s) << " seconds.\n";
 }
 
 
