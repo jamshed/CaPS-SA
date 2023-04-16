@@ -303,17 +303,20 @@ void Suffix_Array::partition_sub_subarrays(const idx_t* const P)
         [&](const std::size_t j)
         {
             auto const Y_j = SA_w + part_size_scan_[j]; // Memory-base for partition `j`.
+            auto const LCP_Y_j = LCP_w + part_size_scan_[j];    // Memory-base for LCPs of partition `j`.
             auto const sub_subarr_idx = part_ruler_ + j * p_;   // Index of the sorted sub-subarrays in `Y_j`.
             idx_t curr_idx = 0; // Current index into `Y_j`.
 
             for(std::size_t i = 0; i < p_; ++i) // Subarray `i`.
             {
                 const auto X_i = SA_ + i * subarr_size; // `i`'th sorted subarray.
+                const auto LCP_X_i = LCP_ + i * subarr_size;    // LCP array of `X_i`.
                 const auto P_i = P + i * (p_ + 1);  // Pivot collection of subarray `i`.
 
                 const auto sub_subarr_size = P_i[j + 1] - P_i[j];   // Size of the `j`'th sub-subarray of subarray `i`.
                 sub_subarr_idx[i] = curr_idx;
                 std::memcpy(Y_j + sub_subarr_idx[i], X_i + P_i[j], sub_subarr_size * sizeof(idx_t));
+                std::memcpy(LCP_Y_j + sub_subarr_idx[i], LCP_X_i + P_i[j], sub_subarr_size * sizeof(idx_t));
                 curr_idx += sub_subarr_size;
             }
 
