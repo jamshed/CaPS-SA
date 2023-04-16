@@ -22,7 +22,8 @@ Suffix_Array::Suffix_Array(const char* const T, const std::size_t n):
     p_(std::getenv("PARLAY_NUM_THREADS") == nullptr ? 0 : std::atoi(std::getenv("PARLAY_NUM_THREADS"))),
     pivot_(nullptr),
     pivot_per_part_(p_ - 1),
-    part_size_scan_(nullptr)
+    part_size_scan_(nullptr),
+    part_ruler_(nullptr)
 {
     if(p_ == 0)
     {
@@ -292,14 +293,17 @@ void Suffix_Array::partition_sub_subarrays(const idx_t* const P)
     }
 
     part_size_scan_[p_] = curr_sum;
+    assert(part_size_scan_[p_] == n_);
 
 
     // Collate the sorted sub-subarrays to appropriate partitions.
+    part_ruler_ = allocate<idx_t>(p_ * p_);
     const idx_t subarr_size = n_ / p_;
     const auto collate =    // Collates the `j`'th sub-subarray from each sorted subarray to partition `j`.
         [&](const std::size_t j)
         {
             auto const Y_j = SA_w + part_size_scan_[j]; // Memory-base for partition `j`.
+            auto const sub_subarr_idx = part_ruler_ + j * p_;   // Index of the sorted sub-subarrays in `Y_j`.
             idx_t curr_idx = 0; // Current index into `Y_j`.
 
             for(std::size_t i = 0; i < p_; ++i) // Subarray `i`.
@@ -308,10 +312,12 @@ void Suffix_Array::partition_sub_subarrays(const idx_t* const P)
                 const auto P_i = P + i * (p_ + 1);  // Pivot collection of subarray `i`.
 
                 const auto sub_subarr_size = P_i[j + 1] - P_i[j];   // Size of the `j`'th sub-subarray of subarray `i`.
-                std::memcpy(Y_j + curr_idx, X_i + P_i[j], sub_subarr_size * sizeof(idx_t));
+                sub_subarr_idx[i] = curr_idx;
+                std::memcpy(Y_j + sub_subarr_idx[i], X_i + P_i[j], sub_subarr_size * sizeof(idx_t));
                 curr_idx += sub_subarr_size;
             }
 
+            sub_subarr_idx[p_] = curr_idx;
             assert(curr_idx == part_size_scan_[j + 1] - part_size_scan_[j]);
         };
 
@@ -331,6 +337,7 @@ void Suffix_Array::clean_up()
 
     std::free(pivot_);
     std::free(part_size_scan_);
+    std::free(part_ruler_);
 
     const auto t_e = now();
     std::cerr << "Released the temporary data structures. Time taken: " << duration(t_e - t_s) << " seconds.\n";
