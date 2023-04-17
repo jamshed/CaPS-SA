@@ -317,6 +317,7 @@ void Suffix_Array::partition_sub_subarrays(const idx_t* const P)
                 sub_subarr_idx[i] = curr_idx;
                 std::memcpy(Y_j + sub_subarr_idx[i], X_i + P_i[j], sub_subarr_size * sizeof(idx_t));
                 std::memcpy(LCP_Y_j + sub_subarr_idx[i], LCP_X_i + P_i[j], sub_subarr_size * sizeof(idx_t));
+                LCP_Y_j[sub_subarr_idx[i]] = 0;
                 curr_idx += sub_subarr_size;
             }
 
