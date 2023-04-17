@@ -297,14 +297,14 @@ void Suffix_Array::partition_sub_subarrays(const idx_t* const P)
 
 
     // Collate the sorted sub-subarrays to appropriate partitions.
-    part_ruler_ = allocate<idx_t>(p_ * p_);
+    part_ruler_ = allocate<idx_t>(p_ * (p_ + 1));
     const idx_t subarr_size = n_ / p_;
     const auto collate =    // Collates the `j`'th sub-subarray from each sorted subarray to partition `j`.
         [&](const std::size_t j)
         {
             auto const Y_j = SA_w + part_size_scan_[j]; // Memory-base for partition `j`.
             auto const LCP_Y_j = LCP_w + part_size_scan_[j];    // Memory-base for LCPs of partition `j`.
-            auto const sub_subarr_idx = part_ruler_ + j * p_;   // Index of the sorted sub-subarrays in `Y_j`.
+            auto const sub_subarr_idx = part_ruler_ + j * (p_ + 1); // Index of the sorted sub-subarrays in `Y_j`.
             idx_t curr_idx = 0; // Current index into `Y_j`.
 
             for(std::size_t i = 0; i < p_; ++i) // Subarray `i`.
