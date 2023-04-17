@@ -133,9 +133,6 @@ void Suffix_Array::initialize()
     const auto sample_count = p_ * pivot_per_part_;
     pivot_ = allocate<idx_t>(sample_count);
 
-    const auto idx_init = [SA_ = SA_, SA_w = SA_w](const std::size_t i){ SA_[i] = SA_w[i] = i; };
-    parlay::parallel_for(0, n_, idx_init);
-
     const auto t_e = now();
     std::cerr << "Initialized required data structures. Time taken: " << duration(t_e - t_s) << " seconds.\n";
 }
@@ -144,6 +141,9 @@ void Suffix_Array::initialize()
 void Suffix_Array::sort_subarrays()
 {
     const auto t_s = now();
+
+    const auto mem_init = [SA_ = SA_, SA_w = SA_w](const std::size_t i){ SA_[i] = SA_w[i] = i; };
+    parlay::parallel_for(0, n_, mem_init);
 
     const auto subarr_size = n_ / p_;   // Size of each subarray to be sorted independently.
     const auto sort_subarr =
