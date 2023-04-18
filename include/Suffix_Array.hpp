@@ -83,6 +83,17 @@ private:
     // sorted subarray, present in `P`, into appropriate partitions.
     void partition_sub_subarrays(const idx_t* P);
 
+    // Merges the sorted sub-subarrays laid flat together in each partition.
+    void merge_sub_subarrays();
+
+    // Merge-sorts the collection `X` that contains `n` sorted arrays of
+    // suffixes laid flat together, into `Y`. `S` contains the delimiter indices
+    // of the `n` arrays in `X`. The LCP array of sorted `X` is constructed in
+    // `LCP_y`; `LCP_x` contains the LCP arrays of the `n` arrays of `X`.
+    // A necessary precondition is that `Y` must be equal to `X`, and `LCP_y` to
+    // `LCP_x`. `X` and `LCP_x` may not remain the same after the sort.
+    void sort_partition(idx_t* X, idx_t* Y, idx_t n, const idx_t* S, idx_t* LCP_x, idx_t* LCP_y);
+
     // Cleans up after the construction algorithm.
     void clean_up();
 

@@ -332,6 +332,56 @@ void Suffix_Array::partition_sub_subarrays(const idx_t* const P)
 }
 
 
+void Suffix_Array::merge_sub_subarrays()
+{
+    const auto t_s = now();
+
+    const auto mem_init =
+        [&](const std::size_t j)
+        {
+            const auto part_size = part_size_scan_[j + 1] - part_size_scan_[j];
+            std::memcpy(SA_ + part_size_scan_[j], SA_w + part_size_scan_[j], part_size * sizeof(idx_t));
+            std::memcpy(LCP_ + part_size_scan_[j], LCP_w + part_size_scan_[j], part_size * sizeof(idx_t));
+        };
+
+    parlay::parallel_for(0, p_, mem_init, 1);   // Fulfill `sort_partition`'s precondition.
+
+
+    const auto sort_part =
+        [&](const std::size_t j)
+        {
+            const auto part_idx = part_size_scan_[j];   // Index of the partition in the partitions' flat collection.
+            auto const X_j = SA_w + part_idx;   // Memory-base for partition `j`.
+            auto const Y_j = SA_ + part_idx;    // Location to sort partition `j`.
+            auto const LCP_X_j = LCP_w + part_idx;  // Memory-base for the LCP-arrays of partition `j`.
+            auto const LCP_Y_j = LCP_ + part_idx;   // LCP array of `Y_j`.
+            auto const sub_subarr_idx = part_ruler_ + j * (p_ + 1); // Indices of the sorted subarrays in `X_i`.
+
+            sort_partition(X_j, Y_j, p_, sub_subarr_idx, LCP_X_j, LCP_Y_j);
+        };
+
+    parlay::parallel_for(0, p_, sort_part, 1);  // Merge the sorted subarrays in each partitions.
+
+    const auto t_e = now();
+    std::cerr << "Merged the sorted subarrays in each partition. Time taken: " << duration(t_e - t_s) << " seconds.\n";
+}
+
+
+void Suffix_Array::sort_partition(idx_t* const X, idx_t* const Y, const idx_t n, const idx_t* const S, idx_t* const LCP_x, idx_t* const LCP_y)
+{
+    if(n == 1)
+        return;
+
+    const auto m = n / 2;
+    const auto flat_count_l = S[m] - S[0];
+    const auto flat_count_r = S[n] - S[m];
+
+    sort_partition(Y, X, m, S, LCP_y, LCP_x);
+    sort_partition(Y + flat_count_l, X + flat_count_l, n - m, S + m, LCP_y + flat_count_l, LCP_x + flat_count_l);
+    merge(X, flat_count_l, X + flat_count_l, flat_count_r, LCP_x, LCP_x + flat_count_l, Y, LCP_y);
+}
+
+
 void Suffix_Array::clean_up()
 {
     const auto t_s = now();
@@ -363,6 +413,8 @@ void Suffix_Array::construct()
     locate_pivots(P);
     partition_sub_subarrays(P);
     std::free(P);
+
+    merge_sub_subarrays();
 
     clean_up();
 
