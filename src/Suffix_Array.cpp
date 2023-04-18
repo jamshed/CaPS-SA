@@ -152,9 +152,14 @@ void Suffix_Array::sort_subarrays()
             merge_sort( SA_w + i * subarr_size, SA_ + i * subarr_size,
                         subarr_size + (i < p_ - 1 ? 0 : n_ % p_),
                         LCP_ + i * subarr_size, LCP_w + i * subarr_size);
+
+            if(++solved_ % 8 == 0)
+                std::cerr << "\rSorted " << solved_ << " subarrays.";
         };
 
+    solved_ = 0;
     parlay::parallel_for(0, p_, sort_subarr, 1);
+    std::cerr << "\n";
 
     const auto t_e = now();
     std::cerr << "Sorted the subarrays independently. Time taken: " << duration(t_e - t_s) << " seconds.\n";
@@ -358,9 +363,14 @@ void Suffix_Array::merge_sub_subarrays()
             auto const sub_subarr_idx = part_ruler_ + j * (p_ + 1); // Indices of the sorted subarrays in `X_i`.
 
             sort_partition(X_j, Y_j, p_, sub_subarr_idx, LCP_X_j, LCP_Y_j);
+
+            if(++solved_ % 8 == 0)
+                std::cerr << "\rMerged " << solved_ << " partitions.";
         };
 
+    solved_ = 0;
     parlay::parallel_for(0, p_, sort_part, 1);  // Merge the sorted subarrays in each partitions.
+    std::cerr << "\n";
 
     const auto t_e = now();
     std::cerr << "Merged the sorted subarrays in each partition. Time taken: " << duration(t_e - t_s) << " seconds.\n";
