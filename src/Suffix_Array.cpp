@@ -382,6 +382,24 @@ void Suffix_Array::sort_partition(idx_t* const X, idx_t* const Y, const idx_t n,
 }
 
 
+void Suffix_Array::compute_partition_boundary_lcp()
+{
+    const auto t_s = now();
+
+    const auto compute_boundary_lcp =
+        [&](const std::size_t j)
+        {
+            const auto part_idx = part_size_scan_[j];
+            LCP_[part_idx] = lcp(T_ + SA_[part_idx - 1], T_ + SA_[part_idx], n_ - std::max(SA_[part_idx - 1], SA_[part_idx]));
+        };
+
+    parlay::parallel_for(1, p_, compute_boundary_lcp, 1);
+
+    const auto t_e = now();
+    std::cerr << "Computed the LCPs at the partition boundaries. Time taken: " << duration(t_e - t_s) << " seconds.\n";
+}
+
+
 void Suffix_Array::clean_up()
 {
     const auto t_s = now();
@@ -415,6 +433,8 @@ void Suffix_Array::construct()
     std::free(P);
 
     merge_sub_subarrays();
+
+    compute_partition_boundary_lcp();
 
     clean_up();
 

@@ -86,6 +86,10 @@ private:
     // Merges the sorted sub-subarrays laid flat together in each partition.
     void merge_sub_subarrays();
 
+    // Computes the LCPs at the partition boundaries, specifically at the
+    // starting index of each partition in their flat collection.
+    void compute_partition_boundary_lcp();
+
     // Merge-sorts the collection `X` that contains `n` sorted arrays of
     // suffixes laid flat together, into `Y`. `S` contains the delimiter indices
     // of the `n` arrays in `X`. The LCP array of sorted `X` is constructed in
