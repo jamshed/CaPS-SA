@@ -37,6 +37,8 @@ private:
     idx_t* part_ruler_; // "Ruler" for the partitions—contains the indices of each sub-subarray in each partition.
     std::atomic_uint64_t solved_;   // Progress tracker—number of subproblems solved in some step.
 
+    static constexpr std::size_t default_subproblem_count = 1024;   // Default subproblem-count to use in construction.
+
     // Fields for profiling time.
     typedef std::chrono::high_resolution_clock::time_point time_point_t;
     constexpr static auto now = std::chrono::high_resolution_clock::now;
@@ -113,8 +115,9 @@ private:
 public:
 
     // Constructs a suffix array object for the input text `T` of size
-    // `n`.
-    Suffix_Array(const char* T, std::size_t n);
+    // `n`. Optionally, the number of subproblems to decompose the original
+    // construction problem into can be provided with `subproblem_count`.
+    Suffix_Array(const char* T, std::size_t n, std::size_t subproblem_count = 0);
 
     // Copy constructs the suffix array object from `other`.
     Suffix_Array(const Suffix_Array& other);
