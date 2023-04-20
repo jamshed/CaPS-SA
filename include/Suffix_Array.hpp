@@ -4,6 +4,7 @@
 
 
 
+#include <cstdint>
 #include <cstddef>
 #include <atomic>
 #include <cstdlib>
@@ -48,6 +49,10 @@ private:
     // Returns the LCP length of `x` and `y`, where `min_len` is the length of
     // the shorter of `x` and `y`.
     static idx_t lcp(const char* x, const char* y, idx_t min_len);
+
+    // Returns the LCP length of `x` and `y`, where `min_len` is the length of
+    // the shorter of `x` and `y`. Optimized with some poor man's vectorization.
+    static idx_t lcp_opt(const char* x, const char* y, idx_t min_len);
 
     // Merges the sorted collections of suffixes, `X` and `Y`, with lengths
     // `len_x` and `len_y` and LCP arrays `LCP_x` and `LCP_y` respectively, into
@@ -150,6 +155,20 @@ inline Suffix_Array::idx_t Suffix_Array::lcp(const char* const x, const char* co
         l++;
 
     return l;
+}
+
+
+inline Suffix_Array::idx_t Suffix_Array::lcp_opt(const char* const x, const char* const y, const idx_t min_len)
+{
+    auto const X = reinterpret_cast<const uint64_t*>(x);
+    auto const Y = reinterpret_cast<const uint64_t*>(y);
+    const auto word_count = (min_len >> 3);
+
+    idx_t i = 0;
+    while(i < word_count && X[i] == Y[i])
+        i++;
+
+    return (i << 3) + lcp(x + (i << 3), y + (i << 3), min_len - (i << 3));
 }
 
 }
