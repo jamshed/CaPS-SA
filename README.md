@@ -20,7 +20,7 @@ Themis is a simple and parallel Suffix Array and LCP array construction algorith
 ## Usage
 
 ```bash
-themis <input_file> <output_file>
+themis <input_file> <output_file> <(optional)-subproblem-count>
 ```
 
 ## Miscellaneous

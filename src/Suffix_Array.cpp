@@ -12,14 +12,14 @@
 namespace themis
 {
 
-Suffix_Array::Suffix_Array(const char* const T, const std::size_t n):
+Suffix_Array::Suffix_Array(const char* const T, const std::size_t n, const std::size_t subproblem_count):
     T_(T),
     n_(n),
     SA_(allocate<idx_t>(n_)),
     LCP_(allocate<idx_t>(n_)),
     SA_w(nullptr),
     LCP_w(nullptr),
-    p_(std::getenv("PARLAY_NUM_THREADS") == nullptr ? 0 : std::atoi(std::getenv("PARLAY_NUM_THREADS"))),
+    p_(subproblem_count > 0 ? subproblem_count : default_subproblem_count),
     pivot_(nullptr),
     pivot_per_part_(p_ - 1),
     part_size_scan_(nullptr),
