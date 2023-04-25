@@ -27,6 +27,7 @@ int main(int argc, char* argv[])
     themis::Suffix_Array suf_arr(str.c_str(), str.length(), subproblem_count);
     suf_arr.construct();
 
+    /*
     std::ofstream output(op_path);
 
     const std::size_t n = suf_arr.n();
@@ -36,6 +37,7 @@ int main(int argc, char* argv[])
         output << suf_arr.LCP()[i] << " \n"[i == n - 1];
 
     output.close();
+    */
 
 
     return 0;

@@ -162,24 +162,27 @@ inline Suffix_Array::idx_t Suffix_Array::lcp(const char* const x, const char* co
     return l;
 }
 
-inline Suffix_Array::idx_t Suffix_Array::lcp_opt_avx(const char* str1, const char* str2, const idx_t len) {
-      int i = 0;
+inline Suffix_Array::idx_t Suffix_Array::lcp_opt_avx(const char* str1, const char* str2, const idx_t len_in) {
+  int64_t i = 0;
+  int64_t len = static_cast<int64_t>(len_in);
+  if (len >= 32) {
     for (; i <= len - 32; i += 32) {
-        __m256i v1 = _mm256_loadu_si256((__m256i*)(str1 + i));
-        __m256i v2 = _mm256_loadu_si256((__m256i*)(str2 + i));
-        __m256i cmp = _mm256_cmpeq_epi8(v1, v2);
-        int mask = _mm256_movemask_epi8(cmp);
-        if (mask != 0xFFFFFFFF) {
-            int j = __builtin_ctz(~mask) + i;
-            return j;
-        }
+      __m256i v1 = _mm256_loadu_si256((__m256i*)(str1 + i));
+      __m256i v2 = _mm256_loadu_si256((__m256i*)(str2 + i));
+      __m256i cmp = _mm256_cmpeq_epi8(v1, v2);
+      int mask = _mm256_movemask_epi8(cmp);
+      if (mask != 0xFFFFFFFF) {
+        int j = __builtin_ctz(~mask) + i;
+        return static_cast<idx_t>(j);
+      }
     }
-    for (; i < len; i++) {
-        if (str1[i] != str2[i]) {
-            break;
-        }
+  }
+  for (; i < len; i++) {
+    if (str1[i] != str2[i]) {
+      break;
     }
-    return i;
+  }
+  return static_cast<idx_t>(i);
 }
 /*
     const size_t len = min_len;

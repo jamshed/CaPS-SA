@@ -69,14 +69,6 @@ void Suffix_Array::merge(const idx_t* X, idx_t len_x, const idx_t* Y, idx_t len_
         else    // Compute LCP of X_i and Y_j through linear scan.
         {
             const idx_t max_n = n_ - std::max(X[i], Y[j]);  // Length of the shorter suffix.
-
-            auto lcp_test = lcp_opt(T_ + (X[i] + m), T_ + (Y[j] + m), max_n - m);   // LCP(X_i, Y_j)
-            auto lcp_real = lcp_opt_avx(T_ + (X[i] + m), T_ + (Y[j] + m), max_n - m);   // LCP(X_i, Y_j)
-            if (lcp_test != lcp_real) { 
-              std::cerr << "real LCP = " << lcp_test << ", but SIMD says = " << lcp_real << "\n";
-              exit(1);
-            }
- 
             const idx_t n = m + lcp_opt_avx(T_ + (X[i] + m), T_ + (Y[j] + m), max_n - m);   // LCP(X_i, Y_j)
 
             // Whether the shorter suffix is a prefix of the longer one.
@@ -248,14 +240,8 @@ std::size_t Suffix_Array::upper_bound(const idx_t* const X, const idx_t n, const
 
         idx_t lcp_c = std::min(lcp_l, lcp_r);   // LCP(X[c], P).
         const auto max_lcp = std::min(suf_len, P_len);  // Maximum possible LCP, i.e. length of the shorter string.
-                                                        //
-        auto lcp_test = lcp_opt(suf + lcp_c, P + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
-        auto lcp_real = lcp_opt_avx(suf + lcp_c, P + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
-        if (lcp_test != lcp_real) { 
-          std::cerr << "real LCP = " << lcp_test << ", but SIMD says = " << lcp_real << "\n";
-          exit(1);
-        }
-        lcp_c += lcp_real;//lcp_opt_avx(suf + lcp_c, P + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
+
+        lcp_c += lcp_opt_avx(suf + lcp_c, P + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
 
         if(lcp_c == max_lcp)    // One is a prefix of the other.
         {
@@ -414,13 +400,7 @@ void Suffix_Array::compute_partition_boundary_lcp()
         [&](const std::size_t j)
         {
           const auto part_idx = part_size_scan_[j];
-          auto lcp_test = lcp_opt(T_ + SA_[part_idx - 1], T_ + SA_[part_idx], n_ - std::max(SA_[part_idx - 1], SA_[part_idx]));
-          auto lcp_real = lcp_opt_avx(T_ + SA_[part_idx - 1], T_ + SA_[part_idx], n_ - std::max(SA_[part_idx - 1], SA_[part_idx]));
-          if (lcp_test != lcp_real) { 
-            std::cerr << "real LCP = " << lcp_test << ", but SIMD says = " << lcp_real << "\n";
-            exit(1);
-          }
-            LCP_[part_idx] = lcp_opt_avx(T_ + SA_[part_idx - 1], T_ + SA_[part_idx], n_ - std::max(SA_[part_idx - 1], SA_[part_idx]));
+          LCP_[part_idx] = lcp_opt_avx(T_ + SA_[part_idx - 1], T_ + SA_[part_idx], n_ - std::max(SA_[part_idx - 1], SA_[part_idx]));
         };
 
     parlay::parallel_for(1, p_, compute_boundary_lcp, 1);
