@@ -27,15 +27,15 @@ int main(int argc, char* argv[])
     themis::Suffix_Array suf_arr(str.c_str(), str.length(), subproblem_count);
     suf_arr.construct();
 
-    // std::ofstream output(op_path);
+    std::ofstream output(op_path);
 
-    // const std::size_t n = suf_arr.n();
-    // for(std::size_t i = 0; i < n; ++i)
-    //     output << suf_arr.SA()[i] << " \n"[i == n - 1];
-    // for(std::size_t i = 0; i < n; ++i)
-    //     output << suf_arr.LCP()[i] << " \n"[i == n - 1];
+    const std::size_t n = suf_arr.n();
+    for(std::size_t i = 0; i < n; ++i)
+        output << suf_arr.SA()[i] << " \n"[i == n - 1];
+    for(std::size_t i = 0; i < n; ++i)
+        output << suf_arr.LCP()[i] << " \n"[i == n - 1];
 
-    // output.close();
+    output.close();
 
 
     return 0;
