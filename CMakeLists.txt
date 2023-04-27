@@ -23,7 +23,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(WARNING_FLAGS -Wall -Wextra)
 
 # Extra optimization flags not associated to the `-O` levels.
-set(OPTIMIZE_FLAGS -funroll-loops)
+set(OPTIMIZE_FLAGS -funroll-loops -march=native)
 
 
 # Determine the thread library of the system.
