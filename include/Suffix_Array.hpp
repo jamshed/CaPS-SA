@@ -23,7 +23,7 @@ class Suffix_Array
 {
 private:
 
-    typedef std::size_t idx_t;
+    typedef uint32_t idx_t;
 
     const char* const T_;   // The input text.
     const idx_t n_; // Length of the input text.
@@ -91,7 +91,7 @@ private:
     // Returns the first index `idx` into the sorted suffix collection `X` of
     // length `n` such that `X[idx]` is strictly greater than the query pattern
     // `P` of length `P_len`.
-    std::size_t upper_bound(const idx_t* X, idx_t n, const char* P, std::size_t P_len) const;
+    std::size_t upper_bound(const idx_t* X, idx_t n, const char* P, idx_t P_len) const;
 
     // Collates the sub-subarrays delineated by the pivot locations in each
     // sorted subarray, present in `P`, into appropriate partitions.

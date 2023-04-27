@@ -223,7 +223,7 @@ void Suffix_Array::locate_pivots(idx_t* const P) const
 }
 
 
-std::size_t Suffix_Array::upper_bound(const idx_t* const X, const idx_t n, const char* const P, const std::size_t P_len) const
+std::size_t Suffix_Array::upper_bound(const idx_t* const X, const idx_t n, const char* const P, const idx_t P_len) const
 {
     // Invariant: SA[l] < s < SA[r].
 
