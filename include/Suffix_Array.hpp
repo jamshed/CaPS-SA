@@ -150,6 +150,9 @@ public:
 
     // Constructs the suffix array and the LCP array.
     void construct();
+
+    // Dumps the suffix array and the LCP array into the stream `output`.
+    void dump(std::ofstream& output);
 };
 
 

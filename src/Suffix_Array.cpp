@@ -4,6 +4,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <algorithm>
 #include <cassert>
@@ -212,7 +213,7 @@ void Suffix_Array::locate_pivots(idx_t* const P) const
             const auto P_i = P + i * (p_ + 1);  // Pivot locations in `X_i` are to be placed in `P_i`.
 
             P_i[0] = 0, P_i[p_] = subarr_size + (i < p_ - 1 ? 0 : n_ % p_); // The two flanking pivot indices.
-            for(std::size_t j = 0; j < p_ - 1; ++j)
+            for(std::size_t j = 0; j < p_ - 1; ++j) // TODO: try parallelizing this loop too; observe performance diff.
                 P_i[j + 1] = upper_bound(X_i, P_i[p_], T_ + pivot_[j], n_ - pivot_[j]);
         };
 
@@ -450,6 +451,14 @@ void Suffix_Array::construct()
 
     const auto t_end = now();
     std::cerr << "Constructed the suffix array. Time taken: " << duration(t_end - t_start) << " seconds.\n";
+}
+
+
+void Suffix_Array::dump(std::ofstream& output)
+{
+    output.write(reinterpret_cast<const char*>(&n_), sizeof(n_));
+    output.write(reinterpret_cast<const char*>(SA_), n_ * sizeof(idx_t));
+    output.write(reinterpret_cast<const char*>(LCP_), n_ * sizeof(idx_t));
 }
 
 
