@@ -26,6 +26,12 @@ set(WARNING_FLAGS -Wall -Wextra)
 set(OPTIMIZE_FLAGS -funroll-loops -march=native)
 
 
+# Passed macro defns.
+if(LARGE_IDX)
+    add_compile_definitions(LARGE_IDX=${LARGE_IDX})
+endif()
+
+
 # Determine the thread library of the system.
 include(FindThreads)
 if(NOT Threads_FOUND)

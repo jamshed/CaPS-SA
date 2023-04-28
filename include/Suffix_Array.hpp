@@ -23,7 +23,11 @@ class Suffix_Array
 {
 private:
 
+#ifdef LARGE_IDX
+    typedef uint64_t idx_t;
+#else
     typedef uint32_t idx_t;
+#endif
 
     const char* const T_;   // The input text.
     const idx_t n_; // Length of the input text.
