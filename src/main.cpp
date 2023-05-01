@@ -5,6 +5,25 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <filesystem>
+
+
+void read_input(const std::string& ip_path, std::string& text)
+{
+    std::error_code ec;
+    const auto file_size = std::filesystem::file_size(ip_path, ec);
+
+    if(ec)
+    {
+        std::cerr << ip_path << " : " << ec.message() << "\n";
+        std::exit(EXIT_FAILURE);
+    }
+
+    text.resize(file_size);
+    std::ifstream input(ip_path);
+    input.read(text.data(), file_size);
+    input.close();
+}
 
 
 void pretty_print(const themis::Suffix_Array& suf_arr, std::ofstream& output)
@@ -32,13 +51,14 @@ int main(int argc, char* argv[])
     const std::string op_path(argv[2]);
     const std::size_t subproblem_count(argc == 4 ? std::atoi(argv[3]) : 0);
     const bool print(argc == 5 ? (std::string(argv[4]) == "--pretty-print") : false);
-    std::string str;
 
-    std::getline(std::ifstream(ip_path), str);
+    std::string text;
+    read_input(ip_path, text);
 
-    themis::Suffix_Array suf_arr(str.c_str(), str.length(), subproblem_count);
+    themis::Suffix_Array suf_arr(text.c_str(), text.length(), subproblem_count);
     suf_arr.construct();
 
+    // TODO: time the o/p.
     std::ofstream output(op_path);
     print ? pretty_print(suf_arr, output) : suf_arr.dump(output);
     output.close();
