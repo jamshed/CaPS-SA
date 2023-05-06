@@ -462,9 +462,14 @@ void Suffix_Array::construct()
 
 void Suffix_Array::dump(std::ofstream& output)
 {
+    const auto t_start = now();
+
     output.write(reinterpret_cast<const char*>(&n_), sizeof(n_));
     output.write(reinterpret_cast<const char*>(SA_), n_ * sizeof(idx_t));
     output.write(reinterpret_cast<const char*>(LCP_), n_ * sizeof(idx_t));
+
+    const auto t_end = now();
+    std::cerr << "Dumped the suffix array. Time taken: " << duration(t_end - t_start) << " seconds.\n";
 }
 
 
