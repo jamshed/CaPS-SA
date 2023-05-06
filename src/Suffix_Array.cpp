@@ -116,8 +116,11 @@ void Suffix_Array::merge_sort(idx_t* const X, idx_t* const Y, const idx_t n, idx
     else
     {
         const idx_t m = n / 2;
-        merge_sort(Y, X, m, W, LCP);
-        merge_sort(Y + m, X + m, n - m, W + m, LCP + m);
+        const auto f = [&](){ merge_sort(Y, X, m, W, LCP); };
+        const auto g = [&](){ merge_sort(Y + m, X + m, n - m, W + m, LCP + m); };
+
+        m < nested_par_grain_size ?
+            (f(), g()) : parlay::par_do(f, g);
         merge(X, m, X + m, n - m, W, W + m, Y, LCP);
     }
 }
@@ -387,8 +390,11 @@ void Suffix_Array::sort_partition(idx_t* const X, idx_t* const Y, const idx_t n,
     const auto flat_count_l = S[m] - S[0];
     const auto flat_count_r = S[n] - S[m];
 
-    sort_partition(Y, X, m, S, LCP_y, LCP_x);
-    sort_partition(Y + flat_count_l, X + flat_count_l, n - m, S + m, LCP_y + flat_count_l, LCP_x + flat_count_l);
+    const auto f = [&](){ sort_partition(Y, X, m, S, LCP_y, LCP_x); };
+    const auto g = [&](){ sort_partition(Y + flat_count_l, X + flat_count_l, n - m, S + m, LCP_y + flat_count_l, LCP_x + flat_count_l); };
+
+    (flat_count_l < nested_par_grain_size || flat_count_r < nested_par_grain_size) ?
+        (f(), g()) : parlay::par_do(f, g);
     merge(X, flat_count_l, X + flat_count_l, flat_count_r, LCP_x, LCP_x + flat_count_l, Y, LCP_y);
 }
 
