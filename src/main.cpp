@@ -50,12 +50,13 @@ int main(int argc, char* argv[])
     const std::string ip_path(argv[1]);
     const std::string op_path(argv[2]);
     const std::size_t subproblem_count(argc == 4 ? std::atoi(argv[3]) : 0);
-    const bool print(argc == 5 ? (std::string(argv[4]) == "--pretty-print") : false);
+    const std::size_t max_context(argc == 5 ? std::atoi(argv[4]) : 0);
+    const bool print(argc == 6 ? (std::string(argv[5]) == "--pretty-print") : false);
 
     std::string text;
     read_input(ip_path, text);
 
-    themis::Suffix_Array suf_arr(text.c_str(), text.length(), subproblem_count);
+    themis::Suffix_Array suf_arr(text.c_str(), text.length(), subproblem_count, max_context);
     suf_arr.construct();
 
     // TODO: time the o/p.
