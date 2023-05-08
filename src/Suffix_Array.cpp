@@ -181,6 +181,7 @@ void Suffix_Array::select_pivots()
 {
     const auto t_s = now();
 
+    idx_t pivot_per_part_ = 32 * std::log(n_);  // c \ln n
     const auto sample_count = p_ * pivot_per_part_; // Total number of samples to select pivots from.
     idx_t* const pivot_w = allocate<idx_t>(sample_count);   // Working space to sample pivots.
     const auto subarr_size = n_ / p_;   // Size of each sorted subarray.
