@@ -42,8 +42,8 @@ private:
     idx_t* part_ruler_; // "Ruler" for the partitions—contains the indices of each sub-subarray in each partition.
     std::atomic_uint64_t solved_;   // Progress tracker—number of subproblems solved in some step.
 
-    static constexpr std::size_t default_subproblem_count = 1024;   // Default subproblem-count to use in construction.
-    static constexpr std::size_t nested_par_grain_size = (1lu << 13);   // Granularity for nested parallelism to kick in.
+    static constexpr std::size_t default_subproblem_count = 4096;   // Default subproblem-count to use in construction.
+    static constexpr std::size_t nested_par_grain_size = (1lu << 8);   // Granularity for nested parallelism to kick in.
 
     // Fields for profiling time.
     typedef std::chrono::high_resolution_clock::time_point time_point_t;
