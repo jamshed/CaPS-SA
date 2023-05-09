@@ -237,7 +237,7 @@ std::size_t Suffix_Array::upper_bound(const idx_t* const X, const idx_t n, const
     idx_t c;    // Midpoint in each iteration.
     idx_t soln = n; // Solution of the search.
     idx_t lcp_l = 0, lcp_r = 0; // LCP(s, SA[l]) and LCP(s, SA[r]).
-	idx_t approx = 100000;
+	idx_t approx = 65536;   // TODO: better tune and document.
 
     while(r - l > 1)    // Candidate matches exist.
     {
