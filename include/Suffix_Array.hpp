@@ -36,6 +36,7 @@ private:
     idx_t* SA_w;    // Working space for the SA construction.
     idx_t* LCP_w;   // Working space for the LCP construction.
     const std::size_t p_;   // Count of subproblems used in construction.
+    const idx_t max_context;    // Maximum prefix-context length for comparing suffixes.
     idx_t* pivot_;  // Pivots for the global suffix array.
     const idx_t pivot_per_part_;    // Number of pivots to sample per subarray.
     idx_t* part_size_scan_; // Inclusive scan (prefix sum) of the sizes of the pivoted final partitions containing appropriate sorted sub-subarrays.
@@ -131,8 +132,10 @@ public:
 
     // Constructs a suffix array object for the input text `T` of size
     // `n`. Optionally, the number of subproblems to decompose the original
-    // construction problem into can be provided with `subproblem_count`.
-    Suffix_Array(const char* T, std::size_t n, std::size_t subproblem_count = 0);
+    // construction problem into can be provided with `subproblem_count`, and
+    // the maximum prefix-context length for the suffixes can be bounded by
+    // `max_context`.
+    Suffix_Array(const char* T, std::size_t n, std::size_t subproblem_count = 0, std::size_t max_context = 0);
 
     // Copy constructs the suffix array object from `other`.
     Suffix_Array(const Suffix_Array& other);

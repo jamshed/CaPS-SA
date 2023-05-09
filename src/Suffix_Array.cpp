@@ -13,7 +13,7 @@
 namespace themis
 {
 
-Suffix_Array::Suffix_Array(const char* const T, const std::size_t n, const std::size_t subproblem_count):
+Suffix_Array::Suffix_Array(const char* const T, const std::size_t n, const std::size_t subproblem_count, const std::size_t max_context):
     T_(T),
     n_(n),
     SA_(allocate<idx_t>(n_)),
@@ -21,6 +21,7 @@ Suffix_Array::Suffix_Array(const char* const T, const std::size_t n, const std::
     SA_w(nullptr),
     LCP_w(nullptr),
     p_(subproblem_count > 0 ? subproblem_count : default_subproblem_count),
+    max_context(max_context ? max_context : n_),
     pivot_(nullptr),
     pivot_per_part_(p_ - 1),
     part_size_scan_(nullptr),
@@ -71,7 +72,8 @@ void Suffix_Array::merge(const idx_t* X, idx_t len_x, const idx_t* Y, idx_t len_
         else    // Compute LCP of X_i and Y_j through linear scan.
         {
             const idx_t max_n = n_ - std::max(X[i], Y[j]);  // Length of the shorter suffix.
-            const idx_t n = m + lcp_opt_avx(T_ + (X[i] + m), T_ + (Y[j] + m), max_n - m);   // LCP(X_i, Y_j)
+            const idx_t context = std::min(max_context, max_n); // Prefix-context length for the suffixes.
+            const idx_t n = m + lcp_opt_avx(T_ + (X[i] + m), T_ + (Y[j] + m), context - m); // LCP(X_i, Y_j)
 
             // Whether the shorter suffix is a prefix of the longer one.
             Z[k] = (n == max_n ?    std::max(X[i], Y[j]) :
