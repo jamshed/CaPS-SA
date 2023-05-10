@@ -1,29 +1,30 @@
 import sys
 
+# From ChatGPT Mar 23 Version.
+
 def suffix_array(s):
-    """Compute the suffix array of a string."""
+    """Generate the suffix array of a string"""
     n = len(s)
-    sa = list(range(n))
-    sa.sort(key=lambda i: s[i:])
-    return sa
+    suffixes = [(s[i:], i) for i in range(n)]
+    suffixes.sort()
+    return [suf[1] for suf in suffixes]
 
 def lcp_array(s, sa):
-    """Compute the longest common prefix array of a string and its suffix array."""
+    """Generate the LCP array of a string given its suffix array"""
     n = len(s)
     rank = [0] * n
+    lcp = [0] * n
     for i in range(n):
         rank[sa[i]] = i
-    lcp = [0] * (n-1)
     h = 0
     for i in range(n):
-        if rank[i] == 0:
-            continue
-        j = sa[rank[i]-1]
-        while i+h < n and j+h < n and s[i+h] == s[j+h]:
-            h += 1
-        lcp[rank[i]-1] = h
-        if h > 0:
-            h -= 1
+        if rank[i] > 0:
+            j = sa[rank[i]-1]
+            while i+h < n and j+h < n and s[i+h] == s[j+h]:
+                h += 1
+            lcp[rank[i]] = h
+            if h > 0:
+                h -= 1
     return lcp
 
 
@@ -38,6 +39,6 @@ def main(argv):
 
     with open(out,'w') as f:
         f.write(" ".join([str(x) for x in sa])+"\n")
-        f.write("- " + " ".join([str(x) for x in lcp]))
+        f.write(" ".join([str(x) for x in lcp])+"\n")
 if __name__ == "__main__":
     main(sys.argv)

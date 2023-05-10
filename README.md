@@ -1,8 +1,29 @@
-# themis
+# Themis
 
-themis is a simple parallel suffix array construction algorithm
+Themis is a simple and parallel Suffix Array and LCP array construction algorithm.
 
-# installation
+## Installation
+
+- From source:
+
+  ```bash
+  git clone https://github.com/jamshed/themis.git
+  cd themis/
+  mkdir build && cd build/
+  cmake -DCMAKE_INSTALL_PREFIX=../ ..
+  make install
+  cd ..
+  ```
+
+  This installs Themis in a sub-directory named `bin`, inside the project root directory.
+
+## Usage
+
+```bash
+themis <input_file> <output_file> <(optional)-subproblem-count>
+```
+
+## Miscellaneous
 
 to compare correctness against Shun et. al.'s 2014 parallel algorithm, install via:
 
