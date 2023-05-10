@@ -42,16 +42,16 @@ int main(int argc, char* argv[])
     constexpr auto arg_count = 3;
     if(argc < arg_count)
     {
-        std::cerr << "Usage: themis <input_path> <output_path> <(optional)-subproblem-count> <(optional)--pretty-print>\n";
+        std::cerr << "Usage: themis <input_path> <output_path> <(optional)-subproblem-count> <(optional)-bounded-context> <(optional)--pretty-print>\n";
         std::exit(EXIT_FAILURE);
     }
 
 
     const std::string ip_path(argv[1]);
     const std::string op_path(argv[2]);
-    const std::size_t subproblem_count(argc == 4 ? std::atoi(argv[3]) : 0);
-    const std::size_t max_context(argc == 5 ? std::atoi(argv[4]) : 0);
-    const bool print(argc == 6 ? (std::string(argv[5]) == "--pretty-print") : false);
+    const std::size_t subproblem_count(argc >= 4 ? std::atoi(argv[3]) : 0);
+    const std::size_t max_context(argc >= 5 ? std::atoi(argv[4]) : 0);
+    const bool print(argc >= 6 ? (std::string(argv[5]) == "--pretty-print") : false);
 
     std::string text;
     read_input(ip_path, text);
