@@ -26,7 +26,7 @@ void read_input(const std::string& ip_path, std::string& text)
 }
 
 
-void pretty_print(const themis::Suffix_Array& suf_arr, std::ofstream& output)
+void pretty_print(const CaPS_SA::Suffix_Array& suf_arr, std::ofstream& output)
 {
     const std::size_t n = suf_arr.n();
     for(std::size_t i = 0; i < n; ++i)
@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
     constexpr auto arg_count = 3;
     if(argc < arg_count)
     {
-        std::cerr << "Usage: themis <input_path> <output_path> <(optional)-subproblem-count> <(optional)-bounded-context> <(optional)--pretty-print>\n";
+        std::cerr << "Usage: CaPS_SA <input_path> <output_path> <(optional)-subproblem-count> <(optional)-bounded-context> <(optional)--pretty-print>\n";
         std::exit(EXIT_FAILURE);
     }
 
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
     std::string text;
     read_input(ip_path, text);
 
-    themis::Suffix_Array suf_arr(text.c_str(), text.length(), subproblem_count, max_context);
+    CaPS_SA::Suffix_Array suf_arr(text.c_str(), text.length(), subproblem_count, max_context);
     suf_arr.construct();
 
     // TODO: time the o/p.

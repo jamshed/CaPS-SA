@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.14)
 
 
 # Project name and languages used.
-set(PROJECT_NAME themis)
+set(PROJECT_NAME caps_sa)
 project(${PROJECT_NAME}
         VERSION 0.1.0
         LANGUAGES CXX
