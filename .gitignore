@@ -36,5 +36,8 @@ build/
 bin/
 external/
 
+# Scripts
+scripts/
+
 # Julian Shun's SA library
 suffixTree

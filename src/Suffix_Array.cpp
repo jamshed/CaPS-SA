@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <cassert>
 
-namespace themis
+namespace CaPS_SA
 {
 
 Suffix_Array::Suffix_Array(const char* const T, const std::size_t n, const std::size_t subproblem_count, const std::size_t max_context):

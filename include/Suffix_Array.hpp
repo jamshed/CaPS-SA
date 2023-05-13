@@ -13,7 +13,7 @@
 #include <iostream>
 // =============================================================================
 
-namespace themis
+namespace CaPS_SA
 {
 
 // The Suffix Array (SA) and the Longest Common Prefix (LCP) array constructor
