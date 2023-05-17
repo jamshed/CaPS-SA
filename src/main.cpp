@@ -60,6 +60,7 @@ int main(int argc, char* argv[])
     std::ofstream output(op_path);
 
     std::size_t n = text.length();
+    std::cerr << "Text length: " << n << ".\n";
     if(n <= std::numeric_limits<uint32_t>::max())
     {
         CaPS_SA::Suffix_Array<uint32_t> suf_arr(text.c_str(), text.length(), subproblem_count, max_context);
