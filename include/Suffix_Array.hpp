@@ -18,16 +18,12 @@ namespace CaPS_SA
 
 // The Suffix Array (SA) and the Longest Common Prefix (LCP) array constructor
 // class for some given sequence.
-// TODO: templatize.
+template <typename T_idx_>
 class Suffix_Array
 {
 private:
 
-#ifdef LARGE_IDX
-    typedef uint64_t idx_t;
-#else
-    typedef uint32_t idx_t;
-#endif
+    typedef T_idx_ idx_t;   // Integer-type for indexing the input text.
 
     const char* const T_;   // The input text.
     const idx_t n_; // Length of the input text.
@@ -164,7 +160,8 @@ public:
 };
 
 
-inline Suffix_Array::idx_t Suffix_Array::lcp(const char* const x, const char* const y, const idx_t min_len)
+template <typename T_idx_>
+inline T_idx_ Suffix_Array<T_idx_>::lcp(const char* const x, const char* const y, const idx_t min_len)
 {
     idx_t l = 0;
     while(l < min_len && x[l] == y[l])
@@ -173,7 +170,9 @@ inline Suffix_Array::idx_t Suffix_Array::lcp(const char* const x, const char* co
     return l;
 }
 
-inline Suffix_Array::idx_t Suffix_Array::lcp_opt_avx(const char* str1, const char* str2, const idx_t len_in) {
+
+template <typename T_idx_>
+inline T_idx_ Suffix_Array<T_idx_>::lcp_opt_avx(const char* str1, const char* str2, const idx_t len_in) {
   int64_t i = 0;
   int64_t len = static_cast<int64_t>(len_in);
   if (len >= 32) {
@@ -195,38 +194,10 @@ inline Suffix_Array::idx_t Suffix_Array::lcp_opt_avx(const char* str1, const cha
   }
   return static_cast<idx_t>(i);
 }
-/*
-    const size_t len = min_len;
 
-    const __m256i* p1 = reinterpret_cast<const __m256i*>(str1);
-    const __m256i* p2 = reinterpret_cast<const __m256i*>(str2);
-    const __m256i* end = reinterpret_cast<const __m256i*>(str1 + (len & ~0x1F)); // round down to nearest multiple of 32 bytes
 
-    for (; p1 < end; p1++, p2++) {
-        __m256i v1 = _mm256_loadu_si256(p1);
-        __m256i v2 = _mm256_loadu_si256(p2);
-        __m256i cmp = _mm256_cmpeq_epi8(v1, v2);
-        int mask = _mm256_movemask_epi8(cmp);
-        if (mask != 0xFFFFFFFF) {
-            // found a mismatch, determine the position of the first differing byte
-            uint32_t pos = __builtin_ctz(~mask);
-            return (reinterpret_cast<const char*>(p1) - str1) + pos;
-        }
-    }
-
-    // handle the remaining bytes (less than 32)
-    for (; reinterpret_cast<const char*>(p1) < str1 + len; p1++, p2++) {
-        if (*reinterpret_cast<const char*>(p1) != *reinterpret_cast<const char*>(p2)) {
-            return reinterpret_cast<const char*>(p1) - str1;
-        }
-    }
-
-    // strings are identical up to the length of the shorter string
-    return len;
-}
-*/
-
-inline Suffix_Array::idx_t Suffix_Array::lcp_opt(const char* const x, const char* const y, const idx_t min_len)
+template <typename T_idx_>
+inline T_idx_ Suffix_Array<T_idx_>::lcp_opt(const char* const x, const char* const y, const idx_t min_len)
 {
     auto const X = reinterpret_cast<const uint64_t*>(x);
     auto const Y = reinterpret_cast<const uint64_t*>(y);
