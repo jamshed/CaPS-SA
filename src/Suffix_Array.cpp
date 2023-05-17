@@ -470,7 +470,8 @@ void Suffix_Array::dump(std::ofstream& output)
 {
     const auto t_start = now();
 
-    output.write(reinterpret_cast<const char*>(&n_), sizeof(n_));
+    const std::size_t n = n_;
+    output.write(reinterpret_cast<const char*>(&n), sizeof(std::size_t));
     output.write(reinterpret_cast<const char*>(SA_), n_ * sizeof(idx_t));
     output.write(reinterpret_cast<const char*>(LCP_), n_ * sizeof(idx_t));
 
