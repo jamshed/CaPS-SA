@@ -13,7 +13,7 @@
 namespace CaPS_SA
 {
 
-Suffix_Array::Suffix_Array(const char* const T, const std::size_t n, const std::size_t subproblem_count, const std::size_t max_context):
+Suffix_Array::Suffix_Array(const char* const T, const idx_t n, const idx_t subproblem_count, const idx_t max_context):
     T_(T),
     n_(n),
     SA_(allocate<idx_t>(n_)),
@@ -148,12 +148,12 @@ void Suffix_Array::sort_subarrays()
 {
     const auto t_s = now();
 
-    const auto mem_init = [SA_ = SA_, SA_w = SA_w](const std::size_t i){ SA_[i] = SA_w[i] = i; };
+    const auto mem_init = [SA_ = SA_, SA_w = SA_w](const idx_t i){ SA_[i] = SA_w[i] = i; };
     parlay::parallel_for(0, n_, mem_init);
 
     const auto subarr_size = n_ / p_;   // Size of each subarray to be sorted independently.
     const auto sort_subarr =
-        [&](const std::size_t i)
+        [&](const idx_t i)
         {
             merge_sort( SA_w + i * subarr_size, SA_ + i * subarr_size,
                         subarr_size + (i < p_ - 1 ? 0 : n_ % p_),
@@ -214,13 +214,13 @@ void Suffix_Array::locate_pivots(idx_t* const P) const
     const auto subarr_size = n_ / p_;   // Size of each independent sorted subarray.
 
     const auto locate =
-        [&](const std::size_t i)
+        [&](const idx_t i)
         {
             const auto X_i = SA_ + i * subarr_size; // The i'th subarray.
             const auto P_i = P + i * (p_ + 1);  // Pivot locations in `X_i` are to be placed in `P_i`.
 
             P_i[0] = 0, P_i[p_] = subarr_size + (i < p_ - 1 ? 0 : n_ % p_); // The two flanking pivot indices.
-            for(std::size_t j = 0; j < p_ - 1; ++j) // TODO: try parallelizing this loop too; observe performance diff.
+            for(idx_t j = 0; j < p_ - 1; ++j) // TODO: try parallelizing this loop too; observe performance diff.
                 P_i[j + 1] = upper_bound(X_i, P_i[p_], T_ + pivot_[j], n_ - pivot_[j]);
         };
 
@@ -231,7 +231,7 @@ void Suffix_Array::locate_pivots(idx_t* const P) const
 }
 
 
-std::size_t Suffix_Array::upper_bound(const idx_t* const X, const idx_t n, const char* const P, const idx_t P_len) const
+Suffix_Array::idx_t Suffix_Array::upper_bound(const idx_t* const X, const idx_t n, const char* const P, const idx_t P_len) const
 {
     // Invariant: SA[l] < s < SA[r].
 
@@ -284,10 +284,10 @@ void Suffix_Array::partition_sub_subarrays(const idx_t* const P)
     part_size_scan_ = allocate<idx_t>(p_ + 1);
 
     const auto collect_size =   // Collects the size of the `j`'th partition.
-        [&](const std::size_t j)
+        [&](const idx_t j)
         {
             part_size_scan_[j] = 0;
-            for(std::size_t i = 0; i < p_; ++i) // For subarray `i`.
+            for(idx_t i = 0; i < p_; ++i)   // For subarray `i`.
             {
                 const auto P_i = P + i * (p_ + 1);  // Pivot collection of subarray `i`.
                 part_size_scan_[j] += (P_i[j + 1] - P_i[j]);    // Collect its `j`'th sub-subarray's size.
@@ -299,7 +299,7 @@ void Suffix_Array::partition_sub_subarrays(const idx_t* const P)
 
     // Compute inclusive-scan (prefix sum) of the partition sizes.
     idx_t curr_sum = 0;
-    for(std::size_t j = 0; j < p_; ++j) // For partition `j`.
+    for(idx_t j = 0; j < p_; ++j) // For partition `j`.
     {
         const auto part_size = part_size_scan_[j];
 
@@ -315,14 +315,14 @@ void Suffix_Array::partition_sub_subarrays(const idx_t* const P)
     part_ruler_ = allocate<idx_t>(p_ * (p_ + 1));
     const idx_t subarr_size = n_ / p_;
     const auto collate =    // Collates the `j`'th sub-subarray from each sorted subarray to partition `j`.
-        [&](const std::size_t j)
+        [&](const idx_t j)
         {
             auto const Y_j = SA_w + part_size_scan_[j]; // Memory-base for partition `j`.
             auto const LCP_Y_j = LCP_w + part_size_scan_[j];    // Memory-base for LCPs of partition `j`.
             auto const sub_subarr_idx = part_ruler_ + j * (p_ + 1); // Index of the sorted sub-subarrays in `Y_j`.
             idx_t curr_idx = 0; // Current index into `Y_j`.
 
-            for(std::size_t i = 0; i < p_; ++i) // Subarray `i`.
+            for(idx_t i = 0; i < p_; ++i)   // Subarray `i`.
             {
                 const auto X_i = SA_ + i * subarr_size; // `i`'th sorted subarray.
                 const auto LCP_X_i = LCP_ + i * subarr_size;    // LCP array of `X_i`.
@@ -352,7 +352,7 @@ void Suffix_Array::merge_sub_subarrays()
     const auto t_s = now();
 
     const auto mem_init =
-        [&](const std::size_t j)
+        [&](const idx_t j)
         {
             const auto part_size = part_size_scan_[j + 1] - part_size_scan_[j];
             std::memcpy(SA_ + part_size_scan_[j], SA_w + part_size_scan_[j], part_size * sizeof(idx_t));
@@ -363,7 +363,7 @@ void Suffix_Array::merge_sub_subarrays()
 
 
     const auto sort_part =
-        [&](const std::size_t j)
+        [&](const idx_t j)
         {
             const auto part_idx = part_size_scan_[j];   // Index of the partition in the partitions' flat collection.
             auto const X_j = SA_w + part_idx;   // Memory-base for partition `j`.
@@ -410,7 +410,7 @@ void Suffix_Array::compute_partition_boundary_lcp()
     const auto t_s = now();
 
     const auto compute_boundary_lcp =
-        [&](const std::size_t j)
+        [&](const idx_t j)
         {
           const auto part_idx = part_size_scan_[j];
           LCP_[part_idx] = lcp_opt_avx(T_ + SA_[part_idx - 1], T_ + SA_[part_idx], n_ - std::max(SA_[part_idx - 1], SA_[part_idx]));
@@ -481,12 +481,12 @@ void Suffix_Array::dump(std::ofstream& output)
 
 bool Suffix_Array::is_sorted(const idx_t* const X, const idx_t n) const
 {
-    for(std::size_t i = 1; i < n; ++i)
+    for(idx_t i = 1; i < n; ++i)
     {
         const auto x = T_ + X[i - 1], y = T_ + X[i];
         const auto l = std::min(n_ - X[i - 1], n_ - X[i]);
 
-        for(std::size_t i = 0; i < l; ++i)
+        for(idx_t i = 0; i < l; ++i)
             if(x[i] < y[i])
                 break;
             else if(x[i] > y[i])

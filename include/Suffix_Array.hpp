@@ -35,7 +35,7 @@ private:
     idx_t* const LCP_;  // The LCP array.
     idx_t* SA_w;    // Working space for the SA construction.
     idx_t* LCP_w;   // Working space for the LCP construction.
-    const std::size_t p_;   // Count of subproblems used in construction.
+    const idx_t p_; // Count of subproblems used in construction.
     const idx_t max_context;    // Maximum prefix-context length for comparing suffixes.
     idx_t* pivot_;  // Pivots for the global suffix array.
     const idx_t pivot_per_part_;    // Number of pivots to sample per subarray.
@@ -43,8 +43,8 @@ private:
     idx_t* part_ruler_; // "Ruler" for the partitions—contains the indices of each sub-subarray in each partition.
     std::atomic_uint64_t solved_;   // Progress tracker—number of subproblems solved in some step.
 
-    static constexpr std::size_t default_subproblem_count = 8192;   // Default subproblem-count to use in construction.
-    static constexpr std::size_t nested_par_grain_size = (1lu << 13);   // Granularity for nested parallelism to kick in.
+    static constexpr idx_t default_subproblem_count = 8192; // Default subproblem-count to use in construction.
+    static constexpr idx_t nested_par_grain_size = (1lu << 13); // Granularity for nested parallelism to kick in.
 
     // Fields for profiling time.
     typedef std::chrono::high_resolution_clock::time_point time_point_t;
@@ -97,7 +97,7 @@ private:
     // Returns the first index `idx` into the sorted suffix collection `X` of
     // length `n` such that `X[idx]` is strictly greater than the query pattern
     // `P` of length `P_len`.
-    std::size_t upper_bound(const idx_t* X, idx_t n, const char* P, idx_t P_len) const;
+    idx_t upper_bound(const idx_t* X, idx_t n, const char* P, idx_t P_len) const;
 
     // Collates the sub-subarrays delineated by the pivot locations in each
     // sorted subarray, present in `P`, into appropriate partitions.
@@ -123,7 +123,7 @@ private:
 
     // Returns pointer to a memory-allocation for `size` elements of type `T_`.
     template <typename T_>
-    static T_* allocate(std::size_t size) { return static_cast<T_*>(std::malloc(size * sizeof(T_))); }
+    static T_* allocate(idx_t size) { return static_cast<T_*>(std::malloc(size * sizeof(T_))); }
 
     // Returns true iff `X` is a valid (partial) suffix array with size `n`.
     bool is_sorted(const idx_t* X, idx_t n) const;
@@ -135,7 +135,7 @@ public:
     // construction problem into can be provided with `subproblem_count`, and
     // the maximum prefix-context length for the suffixes can be bounded by
     // `max_context`.
-    Suffix_Array(const char* T, std::size_t n, std::size_t subproblem_count = 0, std::size_t max_context = 0);
+    Suffix_Array(const char* T, idx_t n, idx_t subproblem_count = 0, idx_t max_context = 0);
 
     // Copy constructs the suffix array object from `other`.
     Suffix_Array(const Suffix_Array& other);
@@ -148,7 +148,7 @@ public:
     const char* T() const { return T_; }
 
     // Returns the length of the text.
-    std::size_t n() const { return n_; }
+    idx_t n() const { return n_; }
 
     // Returns the suffix array.
     const idx_t* SA() const { return SA_; }
