@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstdlib>
+#include <limits>
 #include <fstream>
 #include <iostream>
 #include <filesystem>
@@ -26,7 +27,8 @@ void read_input(const std::string& ip_path, std::string& text)
 }
 
 
-void pretty_print(const CaPS_SA::Suffix_Array& suf_arr, std::ofstream& output)
+template <typename T_idx_>
+void pretty_print(const CaPS_SA::Suffix_Array<T_idx_>& suf_arr, std::ofstream& output)
 {
     const std::size_t n = suf_arr.n();
     for(std::size_t i = 0; i < n; ++i)
@@ -51,17 +53,27 @@ int main(int argc, char* argv[])
     const std::string op_path(argv[2]);
     const std::size_t subproblem_count(argc >= 4 ? std::atoi(argv[3]) : 0);
     const std::size_t max_context(argc >= 5 ? std::atoi(argv[4]) : 0);
-    const bool print(argc >= 6 ? (std::string(argv[5]) == "--pretty-print") : false);
 
     std::string text;
     read_input(ip_path, text);
 
-    CaPS_SA::Suffix_Array suf_arr(text.c_str(), text.length(), subproblem_count, max_context);
-    suf_arr.construct();
-
-    // TODO: time the o/p.
     std::ofstream output(op_path);
-    print ? pretty_print(suf_arr, output) : suf_arr.dump(output);
+
+    std::size_t n = text.length();
+    std::cerr << "Text length: " << n << ".\n";
+    if(n <= std::numeric_limits<uint32_t>::max())
+    {
+        CaPS_SA::Suffix_Array<uint32_t> suf_arr(text.c_str(), text.length(), subproblem_count, max_context);
+        suf_arr.construct();
+        suf_arr.dump(output);
+    }
+    else
+    {
+        CaPS_SA::Suffix_Array<uint64_t> suf_arr(text.c_str(), text.length(), subproblem_count, max_context);
+        suf_arr.construct();
+        suf_arr.dump(output);
+    }
+
     output.close();
 
 
