@@ -24,3 +24,5 @@ This installs `caps_sa` in a sub-directory named `bin`, inside the project root 
   export PARLAY_NUM_THREADS=<thread-count>
   caps_sa <input_file> <output_file>
   ```
+
+Note that by default the subproblem count is set to 8000. If `caps_sa` is run on small datasets it may produce a segmentation fault if a given subproblem is of size 0. Future releases will dynamically set subproblem count, but as of the version 1 release, please use a small subproblem count for datasets significantly smaller than the human genome.
