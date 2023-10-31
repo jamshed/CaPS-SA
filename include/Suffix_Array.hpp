@@ -60,6 +60,10 @@ private:
     // the shorter of `x` and `y`. Optimized with some poor man's vectorization.
     static idx_t lcp_opt_avx(const char* x, const char* y, idx_t min_len);
 
+    // Returns the LCP length of `x` and `y`, where `min_len` is the length of
+    // the shorter of `x` and `y`. Optimized with some poor man's vectorization.
+    // NOTE: hand unrolled version of `lcp_opt_avx`.
+    static idx_t lcp_opt_avx_unrolled(const char* x, const char* y, idx_t min_len);
 
     // Merges the sorted collections of suffixes, `X` and `Y`, with lengths
     // `len_x` and `len_y` and LCP arrays `LCP_x` and `LCP_y` respectively, into
@@ -170,6 +174,69 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const char* const x, const char* const y
     return l;
 }
 
+#define LCPCMP(N, IDX_T) \
+      __m256i v1 ## N = _mm256_loadu_si256((__m256i*)(str1 + i + N));\
+      __m256i v2 ## N = _mm256_loadu_si256((__m256i*)(str2 + i + N));\
+      __m256i cmp ## N = _mm256_cmpeq_epi8(v1##N, v2##N);\
+      int mask ## N = _mm256_movemask_epi8(cmp##N);\
+      if (mask ## N != 0xFFFFFFFF) {\
+        int j = __builtin_ctz(~mask ## N) + i + N;\
+        return static_cast<IDX_T>(j);\
+      } 
+
+#define M_REPEAT_1(X, T) X(0, T)
+#define M_REPEAT_2(X, T) X(0, T) X(32, T)
+#define M_REPEAT_3(X, T) M_REPEAT_2(X, T) X(64, T)
+#define M_REPEAT_4(X, T) M_REPEAT_3(X, T) X(96, T)
+#define M_REPEAT_5(X, T) M_REPEAT_4(X, T) X(128, T)
+#define M_REPEAT_6(X, T) M_REPEAT_5(X, T) X(160, T)
+#define M_REPEAT_7(X, T) M_REPEAT_6(X, T) X(192, T)
+#define M_REPEAT_8(X, T) M_REPEAT_7(X, T) X(224, T)
+
+template <typename T_idx_>
+inline T_idx_ Suffix_Array<T_idx_>::lcp_opt_avx_unrolled(const char* str1, const char* str2, const idx_t len_in) {
+  int64_t i = 0;
+  int64_t len = static_cast<int64_t>(len_in);
+
+  if ((len - i)>= 128) {
+    for (; i <= len - 128; i += 128) {
+      M_REPEAT_4(LCPCMP, idx_t);
+    }
+  }
+
+  if ((len - i)>= 96) {
+    for (; i <= len - 96; i += 96) {
+      M_REPEAT_3(LCPCMP, idx_t);
+    }
+  }
+
+  if ((len - i)>= 64) {
+    for (; i <= len - 64; i += 64) {
+      M_REPEAT_2(LCPCMP, idx_t);
+    }
+  }
+
+  if ((len - i) >= 32) {
+    for (; i <= len - 32; i += 32) {
+      __m256i v1 = _mm256_loadu_si256((__m256i*)(str1 + i));
+      __m256i v2 = _mm256_loadu_si256((__m256i*)(str2 + i));
+      __m256i cmp = _mm256_cmpeq_epi8(v1, v2);
+      int mask = _mm256_movemask_epi8(cmp);
+      if (mask != 0xFFFFFFFF) {
+        int j = __builtin_ctz(~mask) + i;
+        return static_cast<idx_t>(j);
+      }
+    }
+  }
+
+  for (; i < len; i++) {
+    if (str1[i] != str2[i]) {
+      break;
+    }
+  }
+
+  return static_cast<idx_t>(i);
+}
 
 template <typename T_idx_>
 inline T_idx_ Suffix_Array<T_idx_>::lcp_opt_avx(const char* str1, const char* str2, const idx_t len_in) {
