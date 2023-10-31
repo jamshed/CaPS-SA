@@ -260,8 +260,8 @@ T_idx_ Suffix_Array<T_idx_>::upper_bound(const idx_t* const X, const idx_t n, co
 
         idx_t lcp_c = std::min(lcp_l, lcp_r);   // LCP(X[c], P).
         lcp_c = std::min(lcp_c, approx);   // LCP(X[c], P).
-        auto max_lcp = std::min(suf_len, P_len);  // Maximum possible LCP, i.e. length of the shorter string.
-		max_lcp = std::min(max_lcp,approx);
+        auto max_lcp = std::min(std::min(suf_len, P_len), max_context); // Maximum possible LCP, i.e. length of the shorter string.
+		max_lcp = std::min(max_lcp, approx);
         lcp_c += lcp_opt_avx(suf + lcp_c, P + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
 
         if(lcp_c == max_lcp)    // One is a prefix of the other.
