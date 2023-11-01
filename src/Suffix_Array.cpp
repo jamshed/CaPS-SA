@@ -24,13 +24,13 @@ Suffix_Array<T_idx_>::Suffix_Array(const char* const T, const idx_t n, const idx
     p_(subproblem_count > 0 ? subproblem_count : default_subproblem_count),
     max_context(max_context ? max_context : n_),
     pivot_(nullptr),
-    pivot_per_part_(std::min(p_ - 1, static_cast<idx_t>(std::ceil(32.0 * std::log(n_))))),  // (c \ln n) or (p - 1)
+    pivot_per_part_(std::min(static_cast<idx_t>(std::ceil(32.0 * std::log(n_))), n_ / p_)), // (c \ln n) or (n / p)
     part_size_scan_(nullptr),
     part_ruler_(nullptr)
 {
-    if(p_ == 0)
+    if(p_ > n_)
     {
-        std::cerr << "The environment variable `PARLAY_NUM_THREADS` needs to be set. Aborting.\n";
+        std::cerr << "Incompatible subproblem-count. Aborting.\n";
         std::exit(EXIT_FAILURE);
     }
 }
@@ -182,7 +182,8 @@ void Suffix_Array<T_idx_>::sort_subarrays()
 template <typename T_idx_>
 void Suffix_Array<T_idx_>::sample_pivots(const idx_t* const X, const idx_t n, const idx_t m, idx_t* const P)
 {
-    const auto gap = n / (m + 1);   // Distance-gap between pivots.
+    assert(m <= n);
+    const auto gap = n / m; // Distance-gap between pivots.
     for(idx_t i = 0; i < m; ++i)
         P[i] = X[(i + 1) * gap - 1];
 }
