@@ -142,6 +142,7 @@ void Suffix_Array<T_idx_>::initialize()
     SA_w = allocate<idx_t>(n_); // Working space for the SA construction.
     LCP_w = allocate<idx_t>(n_);    // Working space for the LCP construction.
 
+    const auto pivot_per_part_ = static_cast<idx_t>(std::ceil(32.0 * std::log(n_)));    // c \ln n
     const auto sample_count = p_ * pivot_per_part_;
     pivot_ = allocate<idx_t>(sample_count);
 
