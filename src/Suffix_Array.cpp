@@ -318,7 +318,7 @@ void Suffix_Array<T_idx_>::locate_pivots(idx_t* const P) const
             const auto tot_subarr_size = subarr_size + (i < p_ - 1 ? 0 : n_ % p_);
             P_i[0] = 0, P_i[p_] = tot_subarr_size; // The two flanking pivot indices.
             
-            bool use_lookup = tot_subarr_size > 8192;
+            bool use_lookup = tot_subarr_size > 16384;
             if (use_lookup) {
               PrefixLookupTab lookup;
               build_prefix_table<T_idx_>(X_i, tot_subarr_size, T_, n_, lookup);

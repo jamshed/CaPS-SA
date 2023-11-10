@@ -25,13 +25,14 @@ struct PrefixLookupTab {
   std::vector<int64_t> breakpoints;
   bool empty = true;
   uint16_t last = 0;
+  int64_t max_breakpoint = 0;
 
   PrefixLookupTab() {
     entries.resize(65536, std::numeric_limits<uint64_t>::max());
-    breakpoints.push_back(-1);
+    breakpoints.push_back(0);
   }
 
-  bool insert(uint16_t u, uint64_t offset) {
+  inline bool insert(uint16_t u, uint64_t offset) {
     if ((u > last) or empty) {
       entries[u] = breakpoints.size();
       breakpoints.push_back(offset);
@@ -42,7 +43,10 @@ struct PrefixLookupTab {
     return false;
   }
   
-  void finish(uint64_t n) { breakpoints.push_back(n); }
+  void finish(uint64_t n) { 
+    breakpoints.push_back(n); 
+    max_breakpoint = n;
+  }
 
   void fill() {
     uint64_t prev = 0;
@@ -61,12 +65,11 @@ struct PrefixLookupTab {
     return std::make_pair(breakpoints[i], breakpoints[i+1]);
   }
 
-  std::pair<int64_t, int64_t> get_expanded(uint16_t u) const {
+  inline std::pair<int64_t, int64_t> get_expanded(uint16_t u) const {
     auto i = entries[u];
-    auto start = breakpoints[i]; 
-    if (start > -1) { --start; }
+    auto start = breakpoints[i]; --start; 
     auto stop = breakpoints[i+1];
-    stop = (stop <  breakpoints.back()) ? stop + 1 : breakpoints.back();
+    stop = std::min(stop + 1, max_breakpoint);//(stop <  breakpoints.back()) ? stop + 1 : breakpoints.back();
     return std::make_pair(start, stop);
   }
 
