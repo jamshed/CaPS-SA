@@ -198,7 +198,7 @@ void Suffix_Array<T_idx_>::select_pivots()
     idx_t* const pivot_w = allocate<idx_t>(sample_count);   // Working space to sample pivots.
     const auto subarr_size = n_ / p_;   // Size of each sorted subarray.
 
-    assert(pivot_per_part_ < subarr_size);
+    assert(pivot_per_part_ <= subarr_size);
     for(idx_t i = 0; i < p_; ++i)
         sample_pivots(  SA_ + i * subarr_size, subarr_size + (i < p_ - 1 ? 0 : n_ % p_),
                         pivot_per_part_, pivot_ + i * pivot_per_part_);
