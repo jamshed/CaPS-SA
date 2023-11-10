@@ -12,6 +12,7 @@ project(${PROJECT_NAME}
         LANGUAGES CXX
 )
 
+#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 # Language standards and hard requirements for such.
 set(CMAKE_CXX_STANDARD 17)
@@ -23,7 +24,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(WARNING_FLAGS -Wall -Wextra)
 
 # Extra optimization flags not associated to the `-O` levels.
-set(OPTIMIZE_FLAGS -funroll-loops -march=native)
+set(OPTIMIZE_FLAGS -Ofast -mavx2 -funroll-loops -march=native)
 
 
 # Determine the thread library of the system.
@@ -31,7 +32,6 @@ include(FindThreads)
 if(NOT Threads_FOUND)
     message(FATAL_ERROR "A supported threads library is required. Aborting.")
 endif()
-
 
 # External projects installer.
 include(ExternalProject)
