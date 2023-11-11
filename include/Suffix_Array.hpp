@@ -71,7 +71,7 @@ private:
     void merge(const idx_t* X, idx_t len_x, const idx_t* Y, idx_t len_y, const idx_t* LCP_x, const idx_t* LCP_y, idx_t* Z, idx_t* LCP_z) const;
 
     // Merge-sorts the suffix collection `X` of length `n` into `Y`. Also
-    // constructs the LCP array of `X` in `LCP`, using `W` as working space.
+    // constructs the LCP array of `Y` in `LCP`, using `W` as working space.
     // A necessary precondition is that `Y` must be equal to `X`.  `X` may
     // not remain the same after the sort.
     void merge_sort(idx_t* X, idx_t* Y, idx_t n, idx_t* LCP, idx_t* W) const;
