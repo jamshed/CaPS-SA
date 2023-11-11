@@ -1,6 +1,8 @@
 
 #include "Suffix_Array.hpp"
+#include "parlay/parallel.h"
 
+#include <algorithm>
 #include <string>
 #include <cstdlib>
 #include <limits>
@@ -56,6 +58,16 @@ int main(int argc, char* argv[])
 
     std::string text;
     read_input(ip_path, text);
+    constexpr char lookup[4] = {'A', 'C', 'T', 'G'};
+    size_t len = text.size();
+    parlay::blocked_for(0, text.size(), 65536, 
+      [&, len](size_t i, size_t start, size_t end) {
+        (void)i;
+        for (size_t j = start; j < std::min(end, len); ++j) {
+          char c = text[j];
+          text[j] = lookup[((std::toupper(c) & 0x6) >> 1)];
+        };
+    });
 
     std::ofstream output(op_path);
 

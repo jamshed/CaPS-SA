@@ -245,6 +245,91 @@ void Suffix_Array<T_idx_>::select_pivots()
 }
 
 
+constexpr uint16_t translation[4] = {0, 1, 3, 2};
+
+uint16_t seq_as_u16(const char* const T) {
+  constexpr size_t context_len = 8;
+  uint16_t r = 0;
+  for (size_t i = 0; i < context_len; ++i) {
+    // take bits 2 and 3 of the ascii rep.
+    // A : 00
+    // C : 01
+    // G : 11
+    // T : 10
+    uint16_t v = translation[(0x6 & T[i]) >> 1];
+    r <<= 2;
+    r |= v;
+  }
+  return r;
+}
+
+std::string u16_as_seq(uint16_t o) {
+  constexpr size_t context_len = 8;
+  std::string r = "XXXXXXXX";
+  for (size_t i = 0; i < context_len; ++i) {
+    // take bits 2 and 3 of the ascii rep.
+    // A : 00
+    // C : 01
+    // G : 11
+    // T : 10
+    uint16_t base = (o & 0x3);
+    o >>= 2;
+    char c = 'X';
+    if (base == 0) { 
+      c = 'A'; 
+    } else if (base == 1) {
+      c = 'C';
+    } else if (base == 2) {
+      c = 'G';
+    } else {
+      c = 'T';
+    }
+    r[context_len - i - 1] = c;
+  }
+  return r;
+}
+
+template <typename T_idx_>
+bool build_prefix_table(const T_idx_* const X, const T_idx_ n, 
+                        const char* const T, 
+                        size_t len,
+                        PrefixLookupTab& lookup) {
+
+  for (size_t offset = 0; offset < n; ++offset) {
+    T_idx_ start_pos = X[offset];
+    if (len - start_pos > 8) {
+      uint16_t u = seq_as_u16(&T[start_pos]);
+      // keep the smallest offset sharing this prefix
+      lookup.insert(u, offset);
+      /*
+      auto po = lookup.get_offset(u);
+      if (po.prefix != u) { 
+        std::cerr << "prefix = " << po.prefix << ", but u = " << u  << "\n";
+        std::exit(1);
+      }
+      std::string ref(&T[start_pos], 8);
+      if (ref.size() != 8) {
+        std::cerr << "what the hell! requested 9 characters but got " << ref.size() << "!\n";
+        std::cerr << "there sould be " << len - start_pos << " characters left in the string\n";
+        std::exit(1);
+      }
+      std::string decode = u16_as_seq(u);
+      if (decode != ref) {
+        std::cerr << "ref = " << ref << ", but decode = " << decode << "\n";
+        std::cerr << "last character is (" << ref[ref.size()-1] << ")\n";
+        std::cerr << "position is " << start_pos + 7 << "\n";
+        std::cerr << "there sould be " << len - start_pos << " characters left in the string\n";
+        std::exit(1);
+      }
+      */
+    } 
+  } 
+  lookup.finish(n);
+  lookup.fill();
+  return true;
+}
+
+
 template <typename T_idx_>
 void Suffix_Array<T_idx_>::locate_pivots(idx_t* const P) const
 {
@@ -258,9 +343,21 @@ void Suffix_Array<T_idx_>::locate_pivots(idx_t* const P) const
             const auto X_i = SA_ + i * subarr_size; // The i'th subarray.
             const auto P_i = P + i * (p_ + 1);  // Pivot locations in `X_i` are to be placed in `P_i`.
 
-            P_i[0] = 0, P_i[p_] = subarr_size + (i < p_ - 1 ? 0 : n_ % p_); // The two flanking pivot indices.
-            for(idx_t j = 0; j < p_ - 1; ++j) // TODO: try parallelizing this loop too; observe performance diff.
+            const auto tot_subarr_size = subarr_size + (i < p_ - 1 ? 0 : n_ % p_);
+            P_i[0] = 0, P_i[p_] = tot_subarr_size; // The two flanking pivot indices.
+            
+            bool use_lookup = tot_subarr_size >= 512;
+            if (use_lookup) {
+              PrefixLookupTab lookup;
+              build_prefix_table<T_idx_>(X_i, tot_subarr_size, T_, n_, lookup);
+              for(idx_t j = 0; j < p_ - 1; ++j) { // TODO: try parallelizing this loop too; observe performance diff.
+                P_i[j + 1] = upper_bound_with_lookup(X_i, P_i[p_], T_ +  pivot_[j], n_ - pivot_[j], lookup);
+              }
+            } else {
+              for(idx_t j = 0; j < p_ - 1; ++j) { // TODO: try parallelizing this loop too; observe performance diff.
                 P_i[j + 1] = upper_bound(X_i, P_i[p_], T_ + pivot_[j], n_ - pivot_[j]);
+              }
+            }
         };
 
     parlay::parallel_for(0, p_, locate, 1);
@@ -269,6 +366,58 @@ void Suffix_Array<T_idx_>::locate_pivots(idx_t* const P) const
     std::cerr << "Located the pivots in each sorted subarray. Time taken: " << duration(t_e - t_s) << " seconds.\n";
 }
 
+template <typename T_idx_>
+T_idx_ Suffix_Array<T_idx_>::upper_bound_with_lookup(const idx_t* const X, const idx_t n, 
+                                                     const char* const P, const idx_t P_len, 
+                                                     const PrefixLookupTab& lookup) const
+{
+    // Invariant: SA[l] < s < SA[r].
+    int64_t l = -1, r = n;  // (Exclusive-) Range of the iterations in the binary search.
+  
+    if (P_len > 8) {
+      uint16_t o = seq_as_u16(P);
+      auto ival = lookup.get_expanded(static_cast<size_t>(o));
+      l = ival.first;
+      r = ival.second;
+    }
+
+    idx_t c;    // Midpoint in each iteration.
+    idx_t soln = n; // Solution of the search.
+    idx_t lcp_l = 0, lcp_r = 0; // LCP(s, SA[l]) and LCP(s, SA[r]).
+	  idx_t approx = 65536;   // TODO: better tune and document.
+
+    while(r - l > 1) {    // Candidate matches exist.
+        c = (l + r) / 2;
+        const char* const suf = T_ + X[c];  // The suffix at the middle.
+        const auto suf_len = n_ - X[c]; // Length of the suffix.
+
+        idx_t lcp_c = std::min(lcp_l, lcp_r);   // LCP(X[c], P).
+        lcp_c = std::min(lcp_c, approx);   // LCP(X[c], P).
+        auto max_lcp = std::min(std::min(suf_len, P_len), max_context); // Maximum possible LCP, i.e. length of the shorter string.
+	  	  max_lcp = std::min(max_lcp, approx);
+        lcp_c += lcp_opt_avx_unrolled(suf + lcp_c, P + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
+
+        if(lcp_c == max_lcp) {    // One is a prefix of the other.
+            if(lcp_c == P_len) { // P is a prefix of the suffix.
+                if(P_len == suf_len) {   // The query is the suffix itself, i.e. P = X[c]
+                    return c + 1;
+                } else {   // P < X[c]
+                    r = c, lcp_r = lcp_c, soln = c;
+                }
+            }
+            else {   // The suffix is a prefix of the query, so X[c] < P; technically impossible if the text terminates with $.
+                l = c, lcp_l = lcp_c;
+            }
+        } else {   // Neither is a prefix of the other.
+            if(suf[lcp_c] < P[lcp_c]) {  // X[c] < P
+                l = c, lcp_l = lcp_c;
+            } else {   // P < X[c]
+                r = c, lcp_r = lcp_c, soln = c;
+            }
+        }
+    }
+    return soln;
+}
 
 template <typename T_idx_>
 T_idx_ Suffix_Array<T_idx_>::upper_bound(const idx_t* const X, const idx_t n, const char* const P, const idx_t P_len) const
@@ -290,7 +439,7 @@ T_idx_ Suffix_Array<T_idx_>::upper_bound(const idx_t* const X, const idx_t n, co
         idx_t lcp_c = std::min(lcp_l, lcp_r);   // LCP(X[c], P).
         lcp_c = std::min(lcp_c, approx);   // LCP(X[c], P).
         auto max_lcp = std::min(std::min(suf_len, P_len), max_context); // Maximum possible LCP, i.e. length of the shorter string.
-		max_lcp = std::min(max_lcp, approx);
+		    max_lcp = std::min(max_lcp, approx);
         lcp_c += lcp_opt_avx_unrolled(suf + lcp_c, P + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
 
         if(lcp_c == max_lcp)    // One is a prefix of the other.
