@@ -66,12 +66,16 @@ int main(int argc, char* argv[])
         CaPS_SA::Suffix_Array<uint32_t> suf_arr(text.c_str(), text.length(), subproblem_count, max_context);
         suf_arr.construct();
         suf_arr.dump(output);
+
+        // std::cerr << "Sortedness: " << suf_arr.is_sorted(suf_arr.SA(), suf_arr.n()) << "\n";
     }
     else
     {
         CaPS_SA::Suffix_Array<uint64_t> suf_arr(text.c_str(), text.length(), subproblem_count, max_context);
         suf_arr.construct();
         suf_arr.dump(output);
+
+        // std::cerr << "Sortedness: " << suf_arr.is_sorted(suf_arr.SA(), suf_arr.n()) << "\n";
     }
 
     output.close();

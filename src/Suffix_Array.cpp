@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <numeric>
 #include <cmath>
 #include <algorithm>
 #include <cassert>
@@ -529,19 +530,25 @@ void Suffix_Array<T_idx_>::dump(std::ofstream& output)
 template <typename T_idx_>
 bool Suffix_Array<T_idx_>::is_sorted(const idx_t* const X, const idx_t n) const
 {
-    for(idx_t i = 1; i < n; ++i)
-    {
-        const auto x = T_ + X[i - 1], y = T_ + X[i];
-        const auto l = std::min(n_ - X[i - 1], n_ - X[i]);
+    std::vector<uint64_t> R(parlay::num_workers(), 1);
 
-        for(idx_t i = 0; i < l; ++i)
-            if(x[i] < y[i])
-                break;
-            else if(x[i] > y[i])
-                return false;
-    }
+    parlay::parallel_for(1, n,
+        [&](const std::size_t i)
+        {
+            const auto x = T_ + X[i - 1], y = T_ + X[i];
+            const auto l = std::min(std::min(n_ - X[i - 1], n_ - X[i]), max_context);
 
-    return true;
+            for(idx_t i = 0; i < l; ++i)
+                if(x[i] < y[i])
+                    break;
+                else if(x[i] > y[i])
+                {
+                    R[parlay::worker_id()] = 0;
+                    break;
+                }
+        });
+
+    return std::accumulate(R.cbegin(), R.cend(), 1lu, std::multiplies<uint64_t>());
 }
 
 }

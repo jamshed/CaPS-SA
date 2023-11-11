@@ -132,8 +132,6 @@ private:
     template <typename T_>
     static T_* allocate(idx_t size) { return static_cast<T_*>(std::malloc(size * sizeof(T_))); }
 
-    // Returns true iff `X` is a valid (partial) suffix array with size `n`.
-    bool is_sorted(const idx_t* X, idx_t n) const;
 
 public:
 
@@ -168,6 +166,10 @@ public:
 
     // Dumps the suffix array and the LCP array into the stream `output`.
     void dump(std::ofstream& output);
+
+    // Returns true iff `X` is a valid (partial) suffix array with size `n`.
+    // TODO: add LCP-array check.
+    bool is_sorted(const idx_t* X, idx_t n) const;
 };
 
 
