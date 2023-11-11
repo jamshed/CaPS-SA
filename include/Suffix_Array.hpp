@@ -76,6 +76,13 @@ private:
     // not remain the same after the sort.
     void merge_sort(idx_t* X, idx_t* Y, idx_t n, idx_t* LCP, idx_t* W) const;
 
+    // Insertion-sorts the suffix collection `X` of length `n` into `Y`. Also
+    // constructs the LCP-array of `Y` in `LCP`.
+    void insertion_sort(idx_t* X, idx_t* Y, idx_t n, idx_t* LCP) const;
+
+    // Returns `true` iff the suffix `x` is lesser than the suffix `y`.
+    bool suf_less(idx_t x, idx_t y) const;
+
     // Initializes internal data structures for the construction algorithm.
     void initialize();
 
@@ -162,6 +169,20 @@ public:
     // Dumps the suffix array and the LCP array into the stream `output`.
     void dump(std::ofstream& output);
 };
+
+
+template <typename T_idx_>
+inline bool Suffix_Array<T_idx_>::suf_less(const idx_t x, const idx_t y) const
+{
+    const idx_t max_n = n_ - std::max(x, y);  // Length of the shorter suffix.
+    const idx_t context = std::min(max_context, max_n); // Prefix-context length for the suffixes.
+    const idx_t lcp = lcp_opt_avx_unrolled(T_ + x, T_ + y, context);
+
+    if(lcp == max_n)
+        return x > y;
+
+    return T_[x + lcp] < T_[y + lcp];
+}
 
 
 template <typename T_idx_>

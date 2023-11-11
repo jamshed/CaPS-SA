@@ -119,6 +119,8 @@ void Suffix_Array<T_idx_>::merge_sort(idx_t* const X, idx_t* const Y, const idx_
 {
     assert(std::memcmp(X, Y, n * sizeof(idx_t)) == 0);
 
+    // if(n <= 8)
+    //     insertion_sort(X, Y, n, LCP);
     if(n == 1)
         LCP[0] = 0;
     else
@@ -130,6 +132,31 @@ void Suffix_Array<T_idx_>::merge_sort(idx_t* const X, idx_t* const Y, const idx_
         m < nested_par_grain_size ?
             (f(), g()) : parlay::par_do(f, g);
         merge(X, m, X + m, n - m, W, W + m, Y, LCP);
+    }
+}
+
+
+template <typename T_idx_>
+void Suffix_Array<T_idx_>::insertion_sort(idx_t* const X, idx_t* const Y, const idx_t n, idx_t* const LCP) const
+{
+    for(idx_t i = 0; i < n; ++i)
+    {
+        idx_t min_idx = i;
+        for(idx_t j = i + 1; j < n; ++j)
+            if(suf_less(X[j], X[min_idx]))
+                min_idx = j;
+
+        Y[i] = X[min_idx];
+        std::swap(X[i], X[min_idx]);
+    }
+
+
+    LCP[0] = 0;
+    for(idx_t i = 1; i < n; ++i)
+    {
+        const idx_t max_n = n_ - std::max(Y[i], Y[i - 1]);  // Length of the shorter suffix.
+        const idx_t context = std::min(max_context, max_n); // Prefix-context length for the suffixes.
+        LCP[i] = lcp_opt_avx_unrolled(T_ + Y[i], T_ + Y[i - 1], context);
     }
 }
 
