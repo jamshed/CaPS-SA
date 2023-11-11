@@ -200,7 +200,7 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const char* const x, const char* const y
       __m256i v2 ## N = _mm256_loadu_si256((__m256i*)(str2 + i + N));\
       __m256i cmp ## N = _mm256_cmpeq_epi8(v1##N, v2##N);\
       int mask ## N = _mm256_movemask_epi8(cmp##N);\
-      if (mask ## N != 0xFFFFFFFF) {\
+      if (mask ## N != static_cast<int>(0xFFFFFFFF)) {\
         int j = __builtin_ctz(~mask ## N) + i + N;\
         return static_cast<IDX_T>(j);\
       } 
@@ -243,7 +243,7 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp_opt_avx_unrolled(const char* str1, const
       __m256i v2 = _mm256_loadu_si256((__m256i*)(str2 + i));
       __m256i cmp = _mm256_cmpeq_epi8(v1, v2);
       int mask = _mm256_movemask_epi8(cmp);
-      if (mask != 0xFFFFFFFF) {
+      if (mask != static_cast<int>(0xFFFFFFFF)) {
         int j = __builtin_ctz(~mask) + i;
         return static_cast<idx_t>(j);
       }
@@ -269,7 +269,7 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp_opt_avx(const char* str1, const char* st
       __m256i v2 = _mm256_loadu_si256((__m256i*)(str2 + i));
       __m256i cmp = _mm256_cmpeq_epi8(v1, v2);
       int mask = _mm256_movemask_epi8(cmp);
-      if (mask != 0xFFFFFFFF) {
+      if (mask != static_cast<int>(0xFFFFFFFF)) {
         int j = __builtin_ctz(~mask) + i;
         return static_cast<idx_t>(j);
       }
