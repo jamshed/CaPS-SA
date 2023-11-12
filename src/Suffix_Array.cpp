@@ -18,6 +18,7 @@ template <typename T_idx_>
 Suffix_Array<T_idx_>::Suffix_Array(const char* const T, const idx_t n, const idx_t subproblem_count, const idx_t max_context):
     T_(T),
     n_(n),
+    B(T, n_),
     SA_(allocate<idx_t>(n_)),
     LCP_(allocate<idx_t>(n_)),
     SA_w(nullptr),
@@ -78,7 +79,8 @@ void Suffix_Array<T_idx_>::merge(const idx_t* X, idx_t len_x, const idx_t* Y, id
         {
             const idx_t max_n = n_ - std::max(X[i], Y[j]);  // Length of the shorter suffix.
             const idx_t context = std::min(max_context, max_n); // Prefix-context length for the suffixes.
-            const idx_t n = m + lcp_opt_avx_unrolled(T_ + (X[i] + m), T_ + (Y[j] + m), context - m); // LCP(X_i, Y_j)
+            // const idx_t n = m + lcp_opt_avx_unrolled(T_ + (X[i] + m), T_ + (Y[j] + m), context - m); // LCP(X_i, Y_j)
+            const idx_t n = m + lcp((X[i] + m), (Y[j] + m), context - m); // LCP(X_i, Y_j)
 
             // Whether the shorter suffix is a prefix of the longer one.
             Z[k] = (n == max_n ?    std::max(X[i], Y[j]) :
@@ -166,6 +168,8 @@ template <typename T_idx_>
 void Suffix_Array<T_idx_>::initialize()
 {
     const auto t_s = now();
+
+    B.construct();
 
     SA_w = allocate<idx_t>(n_); // Working space for the SA construction.
     LCP_w = allocate<idx_t>(n_);    // Working space for the LCP construction.

@@ -3,6 +3,8 @@
 #define THEMIS_SUFFIX_ARRAY_HPP
 
 
+
+#include "Bit_Packed_Text.hpp"
 #include "utilities.hpp"
 
 #include <cstdint>
@@ -13,7 +15,7 @@
 #include <iostream>
 #include <vector>
 
-// #include "meow_hash_x64_aesni.h"
+
 // =============================================================================
 
 namespace CaPS_SA
@@ -87,6 +89,7 @@ private:
 
     const char* const T_;   // The input text.
     const idx_t n_; // Length of the input text.
+    Bit_Packed_Text B;  // Bit-packed representation of the text.
     idx_t* const SA_;   // The suffix array.
     idx_t* const LCP_;  // The LCP array.
     idx_t* SA_w;    // Working space for the SA construction.
@@ -111,6 +114,10 @@ private:
     // Returns the LCP length of `x` and `y`, where `min_len` is the length of
     // the shorter of `x` and `y`.
     static idx_t lcp(const char* x, const char* y, idx_t min_len);
+
+    // Returns the LCP length of `x` and `y`, where `ctx` is the length of their
+    // context.
+    idx_t lcp(idx_t x, idx_t y, idx_t ctx) const;
 
     // Returns the LCP length of `x` and `y`, where `min_len` is the length of
     // the shorter of `x` and `y`. Optimized with some poor man's vectorization.
@@ -255,6 +262,14 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const char* const x, const char* const y
 
     return l;
 }
+
+
+template <typename T_idx_>
+inline T_idx_ Suffix_Array<T_idx_>::lcp(const idx_t x, const idx_t y, const idx_t ctx) const
+{
+    return B.LCP(x, y, ctx);
+}
+
 
 #define LCPCMP(N, IDX_T) \
       __m256i v1 ## N = _mm256_loadu_si256((__m256i*)(str1 + i + N));\
