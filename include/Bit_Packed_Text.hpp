@@ -34,6 +34,10 @@ public:
 
     // Constructs the bit-packed representation.
     void construct();
+
+    // Prints the bit-pack, with left-to-right corresponding to high-to-low
+    // indices and bits.
+    void print();
 };
 
 }
