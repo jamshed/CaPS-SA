@@ -28,10 +28,13 @@ void Bit_Packed_Text::construct()
     const auto pack =
         [&](const std::size_t i)
         {
-            B[i]  = (base_code(T[i << 2]) << 6) |
-                    (base_code(T[(i << 2) | 0b01]) << 4) |
-                    (base_code(T[(i << 2) | 0b10]) << 2) |
-                    (base_code(T[(i << 2) | 0b11]));
+            assert(i < pack_sz);
+            assert(4 * i + 3 < n);
+
+            B[i]  = (base_code(T[i << 2])) |
+                    (base_code(T[(i << 2) | 0b01]) << 2) |
+                    (base_code(T[(i << 2) | 0b10]) << 4) |
+                    (base_code(T[(i << 2) | 0b11]) << 6);
         };
 
 
@@ -40,7 +43,7 @@ void Bit_Packed_Text::construct()
     {
         B[n / 4] = 0;
         for(std::size_t i = 0; i < (n & 3); ++i)
-            B[n / 4] |= (base_code(T[(n / 4) * 4 + i]) << ((3 - i) * 2));
+            B[n / 4] |= (base_code(T[(n / 4) * 4 + i]) << (i * 2));
     }
 }
 
