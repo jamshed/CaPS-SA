@@ -48,7 +48,7 @@ void Bit_Packed_Text::construct()
 }
 
 
-void Bit_Packed_Text::print()
+void Bit_Packed_Text::print() const
 {
     for(int64_t i = pack_sz; i >= 0 ; --i)
         Debug::print_bin(B[i]);

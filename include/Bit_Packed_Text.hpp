@@ -31,7 +31,7 @@ private:
 
     // Returns the 124-nucleobase block from the `i` 'th character, in 256-bits
     // little-endian. No guarantees are provided on the highest byte.
-    __m256i load(std::size_t idx);
+    __m256i load(std::size_t idx) const;
 
 
 public:
@@ -44,11 +44,11 @@ public:
 
     // Prints the bit-pack, with left-to-right corresponding to high-to-low
     // indices and bits.
-    void print();
+    void print() const;
 };
 
 
-inline __m256i Bit_Packed_Text::load(const std::size_t i)
+inline __m256i Bit_Packed_Text::load(const std::size_t i) const
 {
     assert(i + 124 <= n);
 
