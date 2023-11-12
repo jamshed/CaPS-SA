@@ -42,6 +42,10 @@ public:
     // Constructs the bit-packed representation.
     void construct();
 
+    // Returns the LCP length of the suffixes `x` and `y`, where `ctx` is the
+    // context length.
+    std::size_t LCP(std::size_t x, std::size_t y, std::size_t ctx) const;
+
     // Prints the bit-pack, with left-to-right corresponding to high-to-low
     // indices and bits.
     void print() const;
@@ -68,6 +72,44 @@ inline __m256i Bit_Packed_Text::load(const std::size_t i) const
     const auto restored = _mm256_or_si256(trail_cleared, lost_bits);
 
     return restored;
+}
+
+
+inline std::size_t Bit_Packed_Text::LCP(const std::size_t x, const std::size_t y, const std::size_t ctx) const
+{
+    constexpr std::size_t blk_sz = 124;
+    constexpr __mmask32 clear_MSB_mask = ~(__mmask32(1) << 31); // To clear out the unguaranteed top byte from `load`.
+
+    std::size_t i = x, j = y;
+    std::size_t lcp = 0;
+    for(std::size_t compared = 0; compared + blk_sz <= ctx; compared += ctx)
+    {
+        const auto X = load(i);
+        const auto Y = load(j);
+
+        const auto neq_mask = (~_mm256_movemask_epi8(_mm256_cmpeq_epi8(X, Y))) & clear_MSB_mask;
+                            //  _mm256_cmpneq_epi8_mask(X, Y) & clear_MSB_mask; // AVX512
+        if(neq_mask)
+        {
+            const auto bytes_eq = __builtin_ctz(neq_mask);
+            alignas(32) uint8_t X_bytes[32];
+            _mm256_store_si256(reinterpret_cast<__m256i*>(X_bytes), X);
+            alignas(32) uint8_t Y_bytes[32];
+            _mm256_store_si256(reinterpret_cast<__m256i*>(Y_bytes), Y);
+            assert(X_bytes[bytes_eq] != Y_bytes[bytes_eq]);
+            const auto bits_eq  = __builtin_ctz(X_bytes[bytes_eq] ^ Y_bytes[bytes_eq]);
+
+            lcp += (bytes_eq << 2) + (bits_eq >> 1);
+            return lcp;
+        }
+
+        i += blk_sz, j += blk_sz, lcp += blk_sz;
+    }
+
+    while(lcp < ctx && T[x + lcp] == T[y + lcp])
+        lcp++;
+
+    return lcp;
 }
 
 }
