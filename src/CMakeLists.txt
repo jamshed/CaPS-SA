@@ -5,6 +5,7 @@
 set(PROJECT_SRC
         Suffix_Array.cpp
         Bit_Packed_Text.cpp
+        utilities.cpp
 )
 
 

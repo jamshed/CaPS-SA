@@ -32,41 +32,15 @@ namespace Debug
             std::cerr << ((x & (uint64_t(1) << i)) ? 1 : 0);
     }
 
-
     // Prints the hex representation of `x`.
     template <typename T_>
     inline void print_hex(T_ x) { std::cerr << std::hex << x; }
 
-
     // Prints the hex representation of the 256-bit register `val`.
-    inline void print256_hex(__m256i val)
-    {
-        alignas(32) int64_t W[4];
-        _mm256_store_si256(reinterpret_cast<__m256i*>(W), val);
-
-        for(int i = 3; i >= 0; --i)
-        {
-            print_hex(W[i]);
-            std::cerr << " ";
-        }
-
-        std::cerr << "\n";
-    }
+    void print256_hex(__m256i val);
 
     // Prints the binary representation of the 256-bit register `val`.
-    inline void print256_bin(__m256i val)
-    {
-        alignas(32) int64_t W[4];
-        _mm256_store_si256(reinterpret_cast<__m256i*>(W), val);
-
-        for(int i = 3; i >= 0; --i)
-        {
-            print_bin(W[i]);
-            std::cerr << " ";
-        }
-
-        std::cerr << "\n";
-    }
+    void print256_bin(__m256i val);
 }
 };
 
