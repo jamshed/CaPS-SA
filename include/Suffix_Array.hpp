@@ -267,6 +267,11 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const char* const x, const char* const y
 template <typename T_idx_>
 inline T_idx_ Suffix_Array<T_idx_>::lcp(const idx_t x, const idx_t y, const idx_t ctx) const
 {
+    const auto v_x = *reinterpret_cast<const uint64_t*>(T_ + x);
+    const auto v_y = *reinterpret_cast<const uint64_t*>(T_ + y);
+    if(v_x != v_y)
+        return __builtin_ctzll(v_x ^ v_y) >> 3;
+
     return B.LCP(x, y, ctx);
 }
 
