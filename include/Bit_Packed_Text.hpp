@@ -82,7 +82,7 @@ inline std::size_t Bit_Packed_Text::LCP(const std::size_t x, const std::size_t y
 
     std::size_t i = x, j = y;
     std::size_t lcp = 0;
-    for(std::size_t compared = 0; compared + blk_sz <= ctx; compared += ctx)
+    for(std::size_t compared = 0; compared + blk_sz <= ctx; compared += blk_sz)
     {
         const auto X = load(i);
         const auto Y = load(j);
