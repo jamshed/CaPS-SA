@@ -8,6 +8,7 @@
 #include "utilities.hpp"
 
 #include <cstdint>
+#include <cstring>
 #include <cstddef>
 #include <atomic>
 #include <chrono>
@@ -172,6 +173,7 @@ private:
     // length `n` such that `X[idx]` is strictly greater than the query pattern
     // `P` of length `P_len`.
     idx_t upper_bound(const idx_t* X, idx_t n, const char* P, idx_t P_len) const;
+    inline idx_t upper_bound_bitpacked(const idx_t* X, idx_t n, const idx_t P_offset, idx_t P_len) const;
     idx_t upper_bound_with_lookup(const idx_t* X, idx_t n, const char* P, idx_t P_len, 
                                   const PrefixLookupTab& lookup) const;
 
@@ -267,13 +269,17 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const char* const x, const char* const y
 template <typename T_idx_>
 inline T_idx_ Suffix_Array<T_idx_>::lcp(const idx_t x, const idx_t y, const idx_t ctx) const
 {
-  /*
-    const auto v_x = *reinterpret_cast<const uint64_t*>(T_ + x);
-    const auto v_y = *reinterpret_cast<const uint64_t*>(T_ + y);
-    if(v_x != v_y)
-        return __builtin_ctzll(v_x ^ v_y) >> 3;
-  */
-    return B.LCP(x, y, ctx);
+  
+  //const auto v_x = *reinterpret_cast<const uint64_t*>(T_ + x);
+  //const auto v_y = *reinterpret_cast<const uint64_t*>(T_ + y);
+  uint64_t v_x, v_y;
+  std::memcpy(reinterpret_cast<char*>(&v_x), T_ + x, 8);
+  std::memcpy(reinterpret_cast<char*>(&v_y), T_ + y, 8);
+  if(v_x != v_y) {
+    return __builtin_ctzll(v_x ^ v_y) >> 3;
+  }
+  
+  return 8 + B.LCP(x + 8, y + 8, ctx);
 }
 
 

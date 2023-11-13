@@ -359,7 +359,8 @@ void Suffix_Array<T_idx_>::locate_pivots(idx_t* const P) const
               }
             } else {
               for(idx_t j = 0; j < p_ - 1; ++j) { // TODO: try parallelizing this loop too; observe performance diff.
-                P_i[j + 1] = upper_bound(X_i, P_i[p_], T_ + pivot_[j], n_ - pivot_[j]);
+                //P_i[j + 1] = upper_bound(X_i, P_i[p_], T_ + pivot_[j], n_ - pivot_[j]);
+                P_i[j + 1] = upper_bound_bitpacked(X_i, P_i[p_], pivot_[j], n_ - pivot_[j]);
               }
             }
         };
@@ -422,6 +423,56 @@ T_idx_ Suffix_Array<T_idx_>::upper_bound_with_lookup(const idx_t* const X, const
     }
     return soln;
 }
+
+template <typename T_idx_>
+inline T_idx_ Suffix_Array<T_idx_>::upper_bound_bitpacked(const idx_t* const X, const idx_t n, const idx_t P_offset, const idx_t P_len) const
+{
+    // Invariant: SA[l] < s < SA[r].
+
+    int64_t l = -1, r = n;  // (Exclusive-) Range of the iterations in the binary search.
+    idx_t c;    // Midpoint in each iteration.
+    idx_t soln = n; // Solution of the search.
+    idx_t lcp_l = 0, lcp_r = 0; // LCP(s, SA[l]) and LCP(s, SA[r]).
+  	idx_t approx = 65536;   // TODO: better tune and document.
+
+    const char* P = T_ + P_offset;
+    while(r - l > 1)    // Candidate matches exist.
+    {
+        c = (l + r) / 2;
+        const char* const suf = T_ + X[c];  // The suffix at the middle.
+        const idx_t suff_offset = X[c];
+        const auto suf_len = n_ - X[c]; // Length of the suffix.
+
+        idx_t lcp_c = std::min(lcp_l, lcp_r);   // LCP(X[c], P).
+        lcp_c = std::min(lcp_c, approx);   // LCP(X[c], P).
+        auto max_lcp = std::min(std::min(suf_len, P_len), max_context); // Maximum possible LCP, i.e. length of the shorter string.
+		    max_lcp = std::min(max_lcp, approx);
+        //lcp_c += lcp_opt_avx_unrolled(suf + lcp_c, P + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
+        lcp_c += lcp(suff_offset + lcp_c, P_offset + lcp_c, max_lcp - lcp_c);
+
+        if(lcp_c == max_lcp)    // One is a prefix of the other.
+        {
+            if(lcp_c == P_len)  // P is a prefix of the suffix.
+            {
+                if(P_len == suf_len)    // The query is the suffix itself, i.e. P = X[c]
+                    return c + 1;
+                else    // P < X[c]
+                    r = c, lcp_r = lcp_c, soln = c;
+            }
+            else    // The suffix is a prefix of the query, so X[c] < P; technically impossible if the text terminates with $.
+                l = c, lcp_l = lcp_c;
+        }
+        else    // Neither is a prefix of the other.
+            if(suf[lcp_c] < P[lcp_c])   // X[c] < P
+                l = c, lcp_l = lcp_c;
+            else    // P < X[c]
+                r = c, lcp_r = lcp_c, soln = c;
+    }
+
+
+    return soln;
+}
+
 
 template <typename T_idx_>
 T_idx_ Suffix_Array<T_idx_>::upper_bound(const idx_t* const X, const idx_t n, const char* const P, const idx_t P_len) const
