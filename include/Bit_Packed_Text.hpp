@@ -47,6 +47,8 @@ public:
     // little-endian. No guarantees are provided on the highest byte. 
     uint64_t load28(std::size_t i) const;
 
+    uint64_t loadSmall(const std::size_t i, uint32_t ctx) const;
+
     // Returns the LCP length of the suffixes `x` and `y`, where `ctx` is the
     // context length.
     std::size_t LCP(std::size_t x, std::size_t y, std::size_t ctx) const;
@@ -79,6 +81,15 @@ inline __m256i Bit_Packed_Text::load(const std::size_t i) const
     return restored;
 }
 
+inline uint64_t Bit_Packed_Text::loadSmall(const std::size_t i, uint32_t ctx) const {
+    const auto w_idx = i / 4;
+    const auto base_trail = (i & 3);
+
+    uint64_t w;
+    std::memcpy(&w, B + w_idx, 8);
+
+    return (w >> (base_trail * 2)) & ((1lu << ((32 - ctx) * 2)) -1);
+}
 
 inline uint64_t Bit_Packed_Text::load28(const std::size_t i) const
 {

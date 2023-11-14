@@ -288,7 +288,10 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const idx_t x, const idx_t y, const idx_
     (v_x = B.load28(x),
      v_y = B.load28(y),
      (v_x != v_y) ? __builtin_ctzll((v_x ^ v_y) & clear_MSB_mask) >> 1 : 28) : 
-    lcp(T_ + x, T_ + y, ctx);
+    (v_x = B.loadSmall(x, ctx),
+     v_y = B.loadSmall(y, ctx),
+     __builtin_ctzll(v_x ^ v_y) >> 1);
+    //lcp(T_ + x, T_ + y, ctx));
 
     return (lcp_len < 28) ? lcp_len : 28 + B.LCP(x + 28, y + 28, ctx - 28);
 }

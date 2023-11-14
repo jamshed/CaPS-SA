@@ -10,7 +10,7 @@ Bit_Packed_Text::Bit_Packed_Text(const char* T, std::size_t n):
       T(T)
     , n(n)
     , pack_sz((n + 3) / 4)
-    , B(T != nullptr ? allocate<uint8_t>(pack_sz + 1) : nullptr)    // +1 to support 124-nucleobase loads.
+    , B(T != nullptr ? allocate<uint8_t>(pack_sz + 8) : nullptr)    // +1 to support 124-nucleobase loads.
 {}
 
 
