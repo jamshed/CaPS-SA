@@ -77,6 +77,8 @@ inline __m256i Bit_Packed_Text::load(const std::size_t i) const
 
 inline std::size_t Bit_Packed_Text::LCP(const std::size_t x, const std::size_t y, const std::size_t ctx) const
 {
+    assert(ctx <= n);
+
     constexpr std::size_t blk_sz = 124;
     constexpr __mmask32 clear_MSB_mask = ~(__mmask32(1) << 31); // To clear out the unguaranteed top byte from `load`.
 

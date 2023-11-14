@@ -279,7 +279,7 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const idx_t x, const idx_t y, const idx_
     return __builtin_ctzll(v_x ^ v_y) >> 3;
   }
   
-  return 8 + B.LCP(x + 8, y + 8, ctx);
+  return 8 + B.LCP(x + 8, y + 8, ctx - 8);
 }
 
 

@@ -200,6 +200,8 @@ void Suffix_Array<T_idx_>::sort_subarrays()
 
             if(++solved_ % 8 == 0)
                 std::cerr << "\rSorted " << solved_ << " subarrays.";
+
+            assert(is_sorted(SA_ + i * subarr_size, subarr_size + (i < p_ - 1 ? 0 : n_ % p_)));
         };
 
     solved_ = 0;
