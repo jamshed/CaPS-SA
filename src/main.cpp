@@ -1,4 +1,4 @@
-
+#include "CLI11.hpp"
 #include "Suffix_Array.hpp"
 #include "parlay/parallel.h"
 
@@ -42,19 +42,31 @@ void pretty_print(const CaPS_SA::Suffix_Array<T_idx_>& suf_arr, std::ofstream& o
 
 int main(int argc, char* argv[])
 {
+
+    CLI::App app{"Build the suffix array using the divsufsort algorithm"};
+    std::string ip_path;//(argv[1]);
+    std::string op_path;//(argv[2]);
+    std::size_t subproblem_count;//(argc >= 4 ? std::atoi(argv[3]) : 0);
+    std::size_t max_context;//(argc >= 5 ? std::atoi(argv[4]) : 0);
+
+    app.add_option("-i,--input", ip_path, "input file on which to build sa")->required();
+    app.add_option("-o,--output", op_path, "ouput file where SA should be written");
+    app.add_option("-c,--context", max_context, "bounded context length")->default_str("0");
+    app.add_option("-s,--subprob-count", subproblem_count, "subproblem count")->default_str("0");
+    CLI11_PARSE(app, argc, argv);
+
+
     // TODO: standardize the API.
+  /*
     constexpr auto arg_count = 3;
     if(argc < arg_count)
     {
-        std::cerr << "Usage: CaPS_SA <input_path> <output_path> <(optional)-subproblem-count> <(optional)-bounded-context> <(optional)--pretty-print>\n";
         std::exit(EXIT_FAILURE);
+    std::cerr << "Usage: CaPS_SA <input_path> <output_path> <(optional)-subproblem-count> <(optional)-bounded-context> <(optional)--pretty-print>\n";
     }
+  */
 
 
-    const std::string ip_path(argv[1]);
-    const std::string op_path(argv[2]);
-    const std::size_t subproblem_count(argc >= 4 ? std::atoi(argv[3]) : 0);
-    const std::size_t max_context(argc >= 5 ? std::atoi(argv[4]) : 0);
 
     std::string text;
     read_input(ip_path, text);
