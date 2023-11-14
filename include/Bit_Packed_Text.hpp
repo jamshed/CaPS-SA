@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <cstring>
 #include <immintrin.h>
 #include <cassert>
 
@@ -42,6 +43,10 @@ public:
     // Constructs the bit-packed representation.
     void construct();
 
+    // Returns the 28-nucleobase block from the `i`'th character, in 64-bits
+    // little-endian. No guarantees are provided on the highest byte. 
+    uint64_t load28(std::size_t i) const;
+
     // Returns the LCP length of the suffixes `x` and `y`, where `ctx` is the
     // context length.
     std::size_t LCP(std::size_t x, std::size_t y, std::size_t ctx) const;
@@ -72,6 +77,20 @@ inline __m256i Bit_Packed_Text::load(const std::size_t i) const
     const auto restored = _mm256_or_si256(trail_cleared, lost_bits);
 
     return restored;
+}
+
+
+inline uint64_t Bit_Packed_Text::load28(const std::size_t i) const
+{
+    assert(i + 28 <= n);
+
+    const auto w_idx = i / 4;
+    const auto base_trail = (i & 3);
+
+    uint64_t w;
+    std::memcpy(&w, B + w_idx, 8);
+
+    return w >> (base_trail * 2);
 }
 
 
