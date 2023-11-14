@@ -273,6 +273,9 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const idx_t x, const idx_t y, const idx_
     // const auto v_x = *reinterpret_cast<const uint64_t*>(T_ + x);
     // const auto v_y = *reinterpret_cast<const uint64_t*>(T_ + y);
 
+    if(__builtin_expect(ctx < 8, 0))
+        return lcp(T_ + x, T_ + y, ctx);
+
     uint64_t v_x, v_y;
     std::memcpy(reinterpret_cast<char*>(&v_x), T_ + x, 8);
     std::memcpy(reinterpret_cast<char*>(&v_y), T_ + y, 8);
@@ -280,6 +283,7 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const idx_t x, const idx_t y, const idx_
       return __builtin_ctzll(v_x ^ v_y) >> 3;
     }
 
+    assert(ctx >= 8);
     return 8 + B.LCP(x + 8, y + 8, ctx - 8);
   /*
     constexpr auto clear_MSB_mask = ~(uint64_t(0xFF) << 56);
