@@ -88,20 +88,20 @@ inline uint64_t Bit_Packed_Text::loadSmall(const std::size_t i, uint32_t ctx) co
     uint64_t w;
     std::memcpy(&w, B + w_idx, 8);
 
-    return (w >> (base_trail * 2)) & ((1lu << ((32 - ctx) * 2)) -1);
+    return (w >> (base_trail * 2)) & ((1lu << (ctx * 2)) -1);
 }
 
 inline uint64_t Bit_Packed_Text::load28(const std::size_t i) const
 {
-    assert(i + 28 <= n);
+    // assert(i + 28 <= n);
 
     const auto w_idx = i / 4;
-    const auto base_trail = (i & 3);
+    const auto base_trail = (i & 3) << 1;
 
     uint64_t w;
     std::memcpy(&w, B + w_idx, 8);
 
-    return w >> (base_trail *2);
+    return (w << 8) >> (8 + base_trail); 
 }
 
 
@@ -121,8 +121,7 @@ inline std::size_t Bit_Packed_Text::LCP(const std::size_t x, const std::size_t y
 
         const auto neq_mask = (~_mm256_movemask_epi8(_mm256_cmpeq_epi8(X, Y))) & clear_MSB_mask;
                             //  _mm256_cmpneq_epi8_mask(X, Y) & clear_MSB_mask; // AVX512
-        if(neq_mask)
-        {
+        if(neq_mask) {
             const auto bytes_eq = __builtin_ctz(neq_mask);
             alignas(32) uint8_t X_bytes[32];
             _mm256_store_si256(reinterpret_cast<__m256i*>(X_bytes), X);
@@ -138,8 +137,21 @@ inline std::size_t Bit_Packed_Text::LCP(const std::size_t x, const std::size_t y
         i += blk_sz, j += blk_sz, lcp += blk_sz;
     }
 
-    while(lcp < ctx && T[x + lcp] == T[y + lcp])
+  /*if (x + lcp + 8 < n && y + lcp + 8 < n) {
+    auto const X = reinterpret_cast<const uint64_t*>(T[x + lcp]);
+    auto const Y = reinterpret_cast<const uint64_t*>(T[y + lcp]);
+    const auto word_count = ((ctx - lcp) >> 3);
+
+    i = 0;
+    while(i < word_count && X[i] == Y[i]) {
+      lcp += 8;
+      ++i;
+    }
+  }*/
+
+    while(lcp < ctx && T[x + lcp] == T[y + lcp]) {
         lcp++;
+    }
 
     return lcp;
 }
