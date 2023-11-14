@@ -79,7 +79,9 @@ void Suffix_Array<T_idx_>::merge(const idx_t* X, idx_t len_x, const idx_t* Y, id
         {
             const idx_t max_n = n_ - std::max(X[i], Y[j]);  // Length of the shorter suffix.
             const idx_t context = std::min(max_context, max_n); // Prefix-context length for the suffixes.
+
             // const idx_t n = m + lcp_opt_avx_unrolled(T_ + (X[i] + m), T_ + (Y[j] + m), context - m); // LCP(X_i, Y_j)
+            assert(context >= m);
             const idx_t n = m + lcp((X[i] + m), (Y[j] + m), context - m); // LCP(X_i, Y_j)
 
             // Whether the shorter suffix is a prefix of the longer one.
@@ -624,6 +626,8 @@ void Suffix_Array<T_idx_>::merge_sub_subarrays()
 
             if(++solved_ % 8 == 0)
                 std::cerr << "\rMerged " << solved_ << " partitions.";
+
+            assert(is_sorted(Y_j, sub_subarr_idx[p_]));
         };
 
     solved_ = 0;
