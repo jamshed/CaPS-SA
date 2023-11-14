@@ -270,24 +270,24 @@ template <typename T_idx_>
 inline T_idx_ Suffix_Array<T_idx_>::lcp(const idx_t x, const idx_t y, const idx_t ctx) const
 {
   
-  //const auto v_x = *reinterpret_cast<const uint64_t*>(T_ + x);
-  //const auto v_y = *reinterpret_cast<const uint64_t*>(T_ + y);
+    // const auto v_x = *reinterpret_cast<const uint64_t*>(T_ + x);
+    // const auto v_y = *reinterpret_cast<const uint64_t*>(T_ + y);
 
-  uint64_t v_x, v_y;
-  std::memcpy(reinterpret_cast<char*>(&v_x), T_ + x, 8);
-  std::memcpy(reinterpret_cast<char*>(&v_y), T_ + y, 8);
-  if(v_x != v_y) {
-    return __builtin_ctzll(v_x ^ v_y) >> 3;
-  }
+    uint64_t v_x, v_y;
+    std::memcpy(reinterpret_cast<char*>(&v_x), T_ + x, 8);
+    std::memcpy(reinterpret_cast<char*>(&v_y), T_ + y, 8);
+    if(v_x != v_y) {
+      return __builtin_ctzll(v_x ^ v_y) >> 3;
+    }
 
-  return 8 + B.LCP(x + 8, y + 8, ctx - 8);
+    return 8 + B.LCP(x + 8, y + 8, ctx - 8);
   /*
-  constexpr auto clear_MSB_mask = ~(uint64_t(0xFF) << 56);
-  uint64_t v_x = (ctx >=28) ? B.load28(x) : B.loadSmall(x, ctx);
-  uint64_t v_y = (ctx >=28) ? B.load28(y) : B.loadSmall(y, ctx);
-  auto lcp_len = (v_x != v_y) ? (__builtin_ctzll((v_x ^ v_y) & clear_MSB_mask) >> 1) : 28;
+    constexpr auto clear_MSB_mask = ~(uint64_t(0xFF) << 56);
+    uint64_t v_x = (ctx >=28) ? B.load28(x) : B.loadSmall(x, ctx);
+    uint64_t v_y = (ctx >=28) ? B.load28(y) : B.loadSmall(y, ctx);
+    auto lcp_len = (v_x != v_y) ? (__builtin_ctzll((v_x ^ v_y) & clear_MSB_mask) >> 1) : 28;
 
-  return (lcp_len < 28) ? lcp_len : 28 + B.LCP(x + 28, y + 28, ctx - 28);
+    return (lcp_len < 28) ? lcp_len : 28 + B.LCP(x + 28, y + 28, ctx - 28);
   */
 }
 
