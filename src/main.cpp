@@ -1,6 +1,7 @@
-#include "CLI11.hpp"
+
 #include "Suffix_Array.hpp"
 #include "parlay/parallel.h"
+#include "CLI11/CLI11.hpp"
 
 #include <algorithm>
 #include <string>
