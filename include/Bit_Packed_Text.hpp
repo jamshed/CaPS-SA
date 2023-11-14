@@ -90,7 +90,7 @@ inline uint64_t Bit_Packed_Text::load28(const std::size_t i) const
     uint64_t w;
     std::memcpy(&w, B + w_idx, 8);
 
-    return w >> (base_trail * 2);
+    return w >> (base_trail *2);
 }
 
 

@@ -282,17 +282,15 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const idx_t x, const idx_t y, const idx_
 */
   
   // return 8 + B.LCP(x + 8, y + 8, ctx - 8);
+  constexpr auto clear_MSB_mask = ~(uint64_t(0xFF) << 56);
+  uint64_t v_x, v_y;
+  auto lcp_len = (ctx >= 28) ? 
+    (v_x = B.load28(x),
+     v_y = B.load28(y),
+     (v_x != v_y) ? __builtin_ctzll((v_x ^ v_y) & clear_MSB_mask) >> 1 : 28) : 
+    lcp(T_ + x, T_ + y, ctx);
 
-    if(ctx < 28)
-        return lcp(T_ + x, T_ + y, ctx);
-
-    constexpr auto clear_MSB_mask = ~(uint64_t(0xFF) << 56);
-    const auto v_x = B.load28(x) & clear_MSB_mask;
-    const auto v_y = B.load28(y) & clear_MSB_mask;
-    if(v_x != v_y)
-        return __builtin_ctzll(v_x ^ v_y) >> 1;
-
-    return 28 + B.LCP(x + 28, y + 28, ctx - 28);
+    return (lcp_len < 28) ? lcp_len : 28 + B.LCP(x + 28, y + 28, ctx - 28);
 }
 
 
