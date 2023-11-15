@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
         };
     });
   std::ofstream output(op_path);
-  if (!output.is_open()) {
+  if (output.is_open()) {
     output.write(reinterpret_cast<const char*>(text.data()), n);
     if (output.good()) {
       std::cerr << "Dumped the converted string to " << op_path << "\n";
