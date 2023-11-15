@@ -40,6 +40,8 @@ public:
     // Constructs an object for 2-bit-packing a genomic text `T` of length `n`.
     Bit_Packed_Text(const char* T = nullptr, std::size_t n = 0);
 
+    ~Bit_Packed_Text();
+
     // Constructs the bit-packed representation.
     void construct();
 

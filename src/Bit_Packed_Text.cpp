@@ -14,6 +14,12 @@ Bit_Packed_Text::Bit_Packed_Text(const char* T, std::size_t n):
 {}
 
 
+Bit_Packed_Text::~Bit_Packed_Text()
+{
+    std::free(B);
+}
+
+
 void Bit_Packed_Text::construct()
 {
     const auto base_code =
