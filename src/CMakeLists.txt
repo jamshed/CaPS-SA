@@ -24,7 +24,7 @@ target_compile_options(core PRIVATE ${WARNING_FLAGS} ${OPTIMIZE_FLAGS})
 
 # Executable for the driver program.
 add_executable(${PROJECT_NAME} main.cpp)
-
+add_executable(convert_string convert_string.cpp)
 
 # Add dependency of the core to parlaylib.
 add_dependencies(core prj_parlaylib)
@@ -34,14 +34,15 @@ target_link_libraries(core PRIVATE Threads::Threads)
 
 # Link the executable to the core.
 target_link_libraries(${PROJECT_NAME} PRIVATE core)
-
+target_link_libraries(convert_string PRIVATE core)
 
 # Compiler flags for the target.
 target_compile_options(${PROJECT_NAME} PRIVATE ${WARNING_FLAGS} ${OPTIMIZE_FLAGS})
+target_compile_options(convert_string PRIVATE ${WARNING_FLAGS} ${OPTIMIZE_FLAGS})
 
 
 # Installation directory.
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} convert_string
         DESTINATION bin
 )
 
