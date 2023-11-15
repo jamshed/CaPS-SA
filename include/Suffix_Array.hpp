@@ -271,21 +271,27 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const idx_t x, const idx_t y, const idx_
 {
   
   /*
+  const idx_t bctx = (ctx <= 8) ? ctx : 8;
   uint64_t v_x, v_y;
   std::memcpy(reinterpret_cast<char*>(&v_x), T_ + x, 8);
   std::memcpy(reinterpret_cast<char*>(&v_y), T_ + y, 8);
   if(v_x != v_y) {
     return __builtin_ctzll(v_x ^ v_y) >> 3;
   }
-  return 8 + B.LCP(x + 8, y + 8, ctx - 8);
+  return (ctx > 8) ? bctx + B.LCP(x + bctx, y + bctx, ctx - bctx) : ctx;
   */
+  
   const idx_t bctx = (ctx <= 28) ? ctx : 28;
   uint64_t v_x = B.loadSmall(x, bctx);
   uint64_t v_y = B.loadSmall(y, bctx);
-  if (v_x != v_y) {
-    return __builtin_ctzll(v_x ^ v_y) >> 1;
-  }
-  return (ctx > 28) ? bctx + B.LCP(x + bctx, y + bctx, ctx - bctx) : ctx;
+  uint64_t r = __builtin_ctzll(v_x ^ v_y) >> 1;
+  uint64_t minr = std::min(r, static_cast<uint64_t>(ctx));
+  //if (v_x != v_y) {
+    //return __builtin_ctzll(v_x ^ v_y) >> 1;
+  //}
+  return (ctx > 28) ? 
+    ((r == 32) ? bctx + B.LCP(x + bctx, y + bctx, ctx - bctx) : r) : minr;
+  
   /*
   constexpr uint64_t clear_MSB_mask = ~(uint64_t(0xFF) << 56);
   if (ctx >= 28){

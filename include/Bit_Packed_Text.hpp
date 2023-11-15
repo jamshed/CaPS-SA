@@ -81,14 +81,30 @@ inline __m256i Bit_Packed_Text::load(const std::size_t i) const
     return restored;
 }
 
+constexpr uint64_t high_mask(uint64_t ctx) {
+  return ((1lu << (ctx * 2)) -1);
+}
+
+constexpr uint64_t high_mask_table[] = {
+high_mask(0), high_mask(1), high_mask(2), high_mask(3),
+high_mask(4), high_mask(5), high_mask(6),
+high_mask(7), high_mask(8), high_mask(9), 
+high_mask(10), high_mask(11), high_mask(12),
+high_mask(13), high_mask(14), high_mask(15),
+high_mask(16), high_mask(17), high_mask(18),
+high_mask(19), high_mask(20), high_mask(21),
+high_mask(22), high_mask(23), high_mask(24),
+high_mask(25), high_mask(26), high_mask(27),
+high_mask(28) };
+
 inline uint64_t Bit_Packed_Text::loadSmall(const std::size_t i, uint32_t ctx) const {
     const auto w_idx = i / 4;
     const auto base_trail = (i & 3);
 
     uint64_t w;
-    std::memcpy(&w, B + w_idx, 8);
+    std::memcpy(reinterpret_cast<char*>(&w), B + w_idx, 8);
 
-    return (w >> (base_trail * 2)) & ((1lu << (ctx * 2)) -1);
+    return (w >> (base_trail * 2)) & high_mask_table[ctx];//((1lu << (ctx * 2)) -1);
 }
 
 inline uint64_t Bit_Packed_Text::load28(const std::size_t i) const
