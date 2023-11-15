@@ -22,7 +22,10 @@ void read_input(const std::string& ip_path, std::string& text)
         std::exit(EXIT_FAILURE);
     }
 
-    text.resize(file_size);
+    // pad by 8 here so we can always read
+    // suffixes into `uint64_t`s without worrying
+    // about going out of bounds.
+    text.resize(file_size + 8);
     std::ifstream input(ip_path);
     input.read(text.data(), file_size);
     input.close();
@@ -44,38 +47,27 @@ int main(int argc, char* argv[])
 {
 
     CLI::App app{"Build the suffix array using the divsufsort algorithm"};
-    std::string ip_path;//(argv[1]);
-    std::string op_path;//(argv[2]);
-    std::size_t subproblem_count{0};//(argc >= 4 ? std::atoi(argv[3]) : 0);
-    std::size_t max_context{0};//(argc >= 5 ? std::atoi(argv[4]) : 0);
+    std::string ip_path;
+    std::string op_path;
+    std::size_t subproblem_count{0};
+    std::size_t max_context{0};
 
     app.add_option("-i,--input", ip_path, "input file on which to build sa")->required();
     app.add_option("-o,--output", op_path, "ouput file where SA should be written");
     app.add_option("-c,--context", max_context, "bounded context length")->capture_default_str();
     app.add_option("-s,--subprob-count", subproblem_count, "subproblem count")->capture_default_str();
     CLI11_PARSE(app, argc, argv);
-    std::cerr << "context : " << max_context << ", subprob-count: " << subproblem_count << "\n";
-
-    // TODO: standardize the API.
-  /*
-    constexpr auto arg_count = 3;
-    if(argc < arg_count)
-    {
-        std::exit(EXIT_FAILURE);
-    std::cerr << "Usage: CaPS_SA <input_path> <output_path> <(optional)-subproblem-count> <(optional)-bounded-context> <(optional)--pretty-print>\n";
-    }
-  */
-
-
 
     std::string text;
     read_input(ip_path, text);
     constexpr char lookup[4] = {'A', 'C', 'T', 'G'};
-    size_t len = text.size();
-    parlay::blocked_for(0, text.size(), 65536, 
-      [&, len](size_t i, size_t start, size_t end) {
+    // the actual size of the text is 8 less than 
+    // text.length() because of the padding.
+    std::size_t n = text.length() - 8;
+    parlay::blocked_for(0, n, 65536, 
+      [&, n](size_t i, size_t start, size_t end) {
         (void)i;
-        for (size_t j = start; j < std::min(end, len); ++j) {
+        for (size_t j = start; j < std::min(end, n); ++j) {
           char c = text[j];
           text[j] = lookup[((std::toupper(c) & 0x6) >> 1)];
         };
@@ -83,11 +75,10 @@ int main(int argc, char* argv[])
 
     std::ofstream output(op_path);
 
-    std::size_t n = text.length();
-    std::cerr << "Text length: " << n << ".\n";
+    std::cerr << "text length: " << n << ".\n";
     if(n <= std::numeric_limits<uint32_t>::max())
     {
-        CaPS_SA::Suffix_Array<uint32_t> suf_arr(text.c_str(), text.length(), subproblem_count, max_context);
+        CaPS_SA::Suffix_Array<uint32_t> suf_arr(text.data(), n, subproblem_count, max_context);
         suf_arr.construct();
         suf_arr.dump(output);
 
@@ -95,7 +86,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        CaPS_SA::Suffix_Array<uint64_t> suf_arr(text.c_str(), text.length(), subproblem_count, max_context);
+        CaPS_SA::Suffix_Array<uint64_t> suf_arr(text.data(), n, subproblem_count, max_context);
         suf_arr.construct();
         suf_arr.dump(output);
 

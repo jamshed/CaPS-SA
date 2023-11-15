@@ -11,6 +11,7 @@
 #include <cstring>
 #include <immintrin.h>
 #include <cassert>
+#include <bit>
 
 
 // =============================================================================
@@ -109,15 +110,15 @@ inline uint64_t Bit_Packed_Text::loadSmall(const std::size_t i, uint32_t ctx) co
 
 inline uint64_t Bit_Packed_Text::load28(const std::size_t i) const
 {
-    // assert(i + 28 <= n);
+    assert(i + 28 <= n);
 
     const auto w_idx = i / 4;
     const auto base_trail = (i & 3) << 1;
 
     uint64_t w;
-    std::memcpy(&w, B + w_idx, 8);
+    std::memcpy(reinterpret_cast<char*>(&w), B + w_idx, 8);
 
-    return (w << 8) >> (8 + base_trail); 
+    return w >> base_trail;
 }
 
 
@@ -145,7 +146,6 @@ inline std::size_t Bit_Packed_Text::LCP(const std::size_t x, const std::size_t y
             _mm256_store_si256(reinterpret_cast<__m256i*>(Y_bytes), Y);
             assert(X_bytes[bytes_eq] != Y_bytes[bytes_eq]);
             const auto bits_eq  = __builtin_ctz(X_bytes[bytes_eq] ^ Y_bytes[bytes_eq]);
-
             lcp += (bytes_eq << 2) + (bits_eq >> 1);
             return lcp;
         }
@@ -153,23 +153,22 @@ inline std::size_t Bit_Packed_Text::LCP(const std::size_t x, const std::size_t y
         i += blk_sz, j += blk_sz, lcp += blk_sz;
     }
 
-  /*if (x + lcp + 8 < n && y + lcp + 8 < n) {
-    auto const X = reinterpret_cast<const uint64_t*>(T[x + lcp]);
-    auto const Y = reinterpret_cast<const uint64_t*>(T[y + lcp]);
-    const auto word_count = ((ctx - lcp) >> 3);
-
-    i = 0;
-    while(i < word_count && X[i] == Y[i]) {
-      lcp += 8;
-      ++i;
+    uint64_t r = 8;
+    while(lcp < ctx and r == 8) {
+      uint64_t v_x, v_y;
+      std::memcpy(reinterpret_cast<char*>(&v_x), T + x + lcp, 8);
+      std::memcpy(reinterpret_cast<char*>(&v_y), T + y + lcp, 8);
+      r = std::countr_zero(v_x ^ v_y) >> 3;
+      lcp += std::min(r, ctx - lcp);
     }
-  }*/
+    return lcp;
 
+    /*
     while(lcp < ctx && T[x + lcp] == T[y + lcp]) {
         lcp++;
     }
-
     return lcp;
+    */
 }
 
 }
