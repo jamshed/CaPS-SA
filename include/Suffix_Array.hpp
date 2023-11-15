@@ -238,6 +238,9 @@ public:
     // Returns true iff `X` is a valid (partial) suffix array with size `n`.
     // TODO: add LCP-array check.
     bool is_sorted(const idx_t* X, idx_t n) const;
+
+    // Prints the parameters.
+    void print_params() const;
 };
 
 
