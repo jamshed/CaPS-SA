@@ -23,7 +23,7 @@ void read_input(const std::string& ip_path, std::string& text)
         std::exit(EXIT_FAILURE);
     }
 
-    text.resize(file_size);
+    text.resize(file_size + 8);
     std::ifstream input(ip_path);
     input.read(text.data(), file_size);
     input.close();
