@@ -278,6 +278,8 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const idx_t x, const idx_t y, const idx_
     // if(__builtin_expect(ctx < 8, 0))
     //     return lcp(T_ + x, T_ + y, ctx);
 
+    assert(x < n_ && y < n_);
+
     uint64_t v_x, v_y;
     std::memcpy(reinterpret_cast<char*>(&v_x), T_ + x, 8);
     std::memcpy(reinterpret_cast<char*>(&v_y), T_ + y, 8);
