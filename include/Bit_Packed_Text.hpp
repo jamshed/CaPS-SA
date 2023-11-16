@@ -23,7 +23,7 @@ class Bit_Packed_Text
 {
 private:
 
-    const char* const T;    // The input text.
+    char* const T;  // The input text.  // TODO: revert back to `const char*` if all text-based checks are eliminated.
     const std::size_t n;    // Length of the input text.
 
     const std::size_t pack_sz;  // Size of the bit-pack.
@@ -38,7 +38,7 @@ private:
 public:
 
     // Constructs an object for 2-bit-packing a genomic text `T` of length `n`.
-    Bit_Packed_Text(const char* T = nullptr, std::size_t n = 0);
+    Bit_Packed_Text(char* T = nullptr, std::size_t n = 0);
 
     ~Bit_Packed_Text();
 

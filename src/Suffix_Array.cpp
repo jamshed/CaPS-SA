@@ -15,7 +15,7 @@ namespace CaPS_SA
 {
 
 template <typename T_idx_>
-Suffix_Array<T_idx_>::Suffix_Array(const char* const T, const idx_t n, const idx_t subproblem_count, const idx_t max_context):
+Suffix_Array<T_idx_>::Suffix_Array(char* const T, const idx_t n, const idx_t subproblem_count, const idx_t max_context):
     T_(T),
     n_(n),
     B(T, n_),
@@ -37,14 +37,6 @@ Suffix_Array<T_idx_>::Suffix_Array(const char* const T, const idx_t n, const idx
     }
 
     print_params();
-}
-
-
-template <typename T_idx_>
-Suffix_Array<T_idx_>::Suffix_Array(const Suffix_Array& other): Suffix_Array(other.T_, other.n_)
-{
-    std::memcpy(SA_, other.SA_, n_ * sizeof(idx_t));
-    std::memcpy(LCP_, other.LCP_, n_ * sizeof(idx_t));
 }
 
 
