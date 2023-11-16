@@ -56,13 +56,13 @@ int main(int argc, char* argv[])
     CLI::App app{"Build the suffix array using the divsufsort algorithm"};
     std::string ip_path;//(argv[1]);
     std::string op_path;//(argv[2]);
-    std::size_t subproblem_count;//(argc >= 4 ? std::atoi(argv[3]) : 0);
-    std::size_t max_context;//(argc >= 5 ? std::atoi(argv[4]) : 0);
+    std::size_t subproblem_count(0);//(argc >= 4 ? std::atoi(argv[3]) : 0);
+    std::size_t max_context(0);//(argc >= 5 ? std::atoi(argv[4]) : 0);
 
     app.add_option("-i,--input", ip_path, "input file on which to build sa")->required();
     app.add_option("-o,--output", op_path, "ouput file where SA should be written");
-    app.add_option("-c,--context", max_context, "bounded context length")->default_str("0");
-    app.add_option("-s,--subprob-count", subproblem_count, "subproblem count")->default_str("0");
+    // app.add_option("-c,--context", max_context, "bounded context length")->default_str("0");
+    // app.add_option("-s,--subprob-count", subproblem_count, "subproblem count")->default_str("0");
     CLI11_PARSE(app, argc, argv);
 
 
