@@ -6,7 +6,7 @@
 namespace CaPS_SA
 {
 
-Bit_Packed_Text::Bit_Packed_Text(const char* T, std::size_t n):
+Bit_Packed_Text::Bit_Packed_Text(char* T, std::size_t n):
       T(T)
     , n(n)
     , pack_sz((n + 3) / 4)
@@ -14,10 +14,16 @@ Bit_Packed_Text::Bit_Packed_Text(const char* T, std::size_t n):
 {}
 
 
+Bit_Packed_Text::~Bit_Packed_Text()
+{
+    std::free(B);
+}
+
+
 void Bit_Packed_Text::construct()
 {
     const auto base_code =
-        [](char ch)
+        [](char& ch)
         {
             ch &= ~32;  // To upper-case.
             assert(ch == 'A' || ch == 'C' || ch == 'G' || ch == 'T');

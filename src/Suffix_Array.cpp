@@ -15,7 +15,7 @@ namespace CaPS_SA
 {
 
 template <typename T_idx_>
-Suffix_Array<T_idx_>::Suffix_Array(const char* const T, const idx_t n, const idx_t subproblem_count, const idx_t max_context):
+Suffix_Array<T_idx_>::Suffix_Array(char* const T, const idx_t n, const idx_t subproblem_count, const idx_t max_context):
     T_(T),
     n_(n),
     B(T, n_),
@@ -35,14 +35,8 @@ Suffix_Array<T_idx_>::Suffix_Array(const char* const T, const idx_t n, const idx
         std::cerr << "Incompatible subproblem-count. Aborting.\n";
         std::exit(EXIT_FAILURE);
     }
-}
 
-
-template <typename T_idx_>
-Suffix_Array<T_idx_>::Suffix_Array(const Suffix_Array& other): Suffix_Array(other.T_, other.n_)
-{
-    std::memcpy(SA_, other.SA_, n_ * sizeof(idx_t));
-    std::memcpy(LCP_, other.LCP_, n_ * sizeof(idx_t));
+    print_params();
 }
 
 
@@ -759,6 +753,16 @@ bool Suffix_Array<T_idx_>::is_sorted(const idx_t* const X, const idx_t n) const
         });
 
     return std::accumulate(R.cbegin(), R.cend(), 1lu, std::multiplies<uint64_t>());
+}
+
+
+template <typename T_idx_>
+void Suffix_Array<T_idx_>::print_params() const
+{
+    std::cerr << "Text-length, n:      " << n_ << "\n";
+    std::cerr << "Subproblem-count, p: " << p_ << "\n";
+    std::cerr << "Max context-length:  " << max_context << "\n";
+    std::cerr << "Worker-count: " << parlay::num_workers() << "\n";
 }
 
 }

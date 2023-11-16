@@ -12,7 +12,10 @@
 #include <filesystem>
 
 
-void read_input(const std::string& ip_path, std::string& text)
+// Reads the input string at file-path `ip_path`, pads it with 8 empty characters,
+// and returns the size of the read string.
+// TODO: use `char*` to avoid the initialized-resize of `std::string`.
+std::size_t read_and_pad_input(const std::string& ip_path, std::string& text)
 {
     std::error_code ec;
     const auto file_size = std::filesystem::file_size(ip_path, ec);
@@ -23,10 +26,11 @@ void read_input(const std::string& ip_path, std::string& text)
         std::exit(EXIT_FAILURE);
     }
 
-    text.resize(file_size);
+    text.resize(file_size + 8);
     std::ifstream input(ip_path);
     input.read(text.data(), file_size);
     input.close();
+    return file_size;
 }
 
 
@@ -70,36 +74,27 @@ int main(int argc, char* argv[])
 
 
     std::string text;
-    read_input(ip_path, text);
-    constexpr char lookup[4] = {'A', 'C', 'T', 'G'};
-    size_t len = text.size();
-    parlay::blocked_for(0, text.size(), 65536, 
-      [&, len](size_t i, size_t start, size_t end) {
-        (void)i;
-        for (size_t j = start; j < std::min(end, len); ++j) {
-          char c = text[j];
-          text[j] = lookup[((std::toupper(c) & 0x6) >> 1)];
-        };
-    });
+    const std::size_t n = read_and_pad_input(ip_path, text);
 
     std::ofstream output(op_path);
 
-    std::size_t n = text.length();
     std::cerr << "Text length: " << n << ".\n";
     if(n <= std::numeric_limits<uint32_t>::max())
     {
-        CaPS_SA::Suffix_Array<uint32_t> suf_arr(text.c_str(), text.length(), subproblem_count, max_context);
+        CaPS_SA::Suffix_Array<uint32_t> suf_arr(text.data(), n, subproblem_count, max_context);
         suf_arr.construct();
         suf_arr.dump(output);
 
+        assert(suf_arr.is_sorted(suf_arr.SA(), suf_arr.n()));
         // std::cerr << "Sortedness: " << suf_arr.is_sorted(suf_arr.SA(), suf_arr.n()) << "\n";
     }
     else
     {
-        CaPS_SA::Suffix_Array<uint64_t> suf_arr(text.c_str(), text.length(), subproblem_count, max_context);
+        CaPS_SA::Suffix_Array<uint64_t> suf_arr(text.data(), n, subproblem_count, max_context);
         suf_arr.construct();
         suf_arr.dump(output);
 
+        assert(suf_arr.is_sorted(suf_arr.SA(), suf_arr.n()));
         // std::cerr << "Sortedness: " << suf_arr.is_sorted(suf_arr.SA(), suf_arr.n()) << "\n";
     }
 

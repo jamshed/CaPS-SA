@@ -88,7 +88,7 @@ private:
 
     typedef T_idx_ idx_t;   // Integer-type for indexing the input text.
 
-    const char* const T_;   // The input text.
+    char* const T_; // The input text.  // TODO: revert back to `const char*` if all text-based checks are eliminated.
     const idx_t n_; // Length of the input text.
     Bit_Packed_Text B;  // Bit-packed representation of the text.
     idx_t* const SA_;   // The suffix array.
@@ -208,12 +208,11 @@ public:
     // construction problem into can be provided with `subproblem_count`, and
     // the maximum prefix-context length for the suffixes can be bounded by
     // `max_context`.
-    Suffix_Array(const char* T, idx_t n, idx_t subproblem_count = 0, idx_t max_context = 0);
-
-    // Copy constructs the suffix array object from `other`.
-    Suffix_Array(const Suffix_Array& other);
+    Suffix_Array(char* T, idx_t n, idx_t subproblem_count = 0, idx_t max_context = 0);
 
     ~Suffix_Array();
+
+    Suffix_Array(const Suffix_Array& other) = delete;
 
     const Suffix_Array& operator=(const Suffix_Array& rhs) = delete;
 
@@ -238,6 +237,9 @@ public:
     // Returns true iff `X` is a valid (partial) suffix array with size `n`.
     // TODO: add LCP-array check.
     bool is_sorted(const idx_t* X, idx_t n) const;
+
+    // Prints the parameters.
+    void print_params() const;
 };
 
 
@@ -273,8 +275,10 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const idx_t x, const idx_t y, const idx_
     // const auto v_x = *reinterpret_cast<const uint64_t*>(T_ + x);
     // const auto v_y = *reinterpret_cast<const uint64_t*>(T_ + y);
 
-    if(__builtin_expect(ctx < 8, 0))
-        return lcp(T_ + x, T_ + y, ctx);
+    // if(__builtin_expect(ctx < 8, 0))
+    //     return lcp(T_ + x, T_ + y, ctx);
+
+    assert(x < n_ && y < n_);
 
     uint64_t v_x, v_y;
     std::memcpy(reinterpret_cast<char*>(&v_x), T_ + x, 8);
