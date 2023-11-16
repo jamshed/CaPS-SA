@@ -71,6 +71,7 @@ int main(int argc, char* argv[])
 
     std::string text;
     read_input(ip_path, text);
+/*
     constexpr char lookup[4] = {'A', 'C', 'T', 'G'};
     size_t len = text.size();
     parlay::blocked_for(0, text.size(), 65536, 
@@ -81,6 +82,7 @@ int main(int argc, char* argv[])
           text[j] = lookup[((std::toupper(c) & 0x6) >> 1)];
         };
     });
+*/
 
     std::ofstream output(op_path);
 
