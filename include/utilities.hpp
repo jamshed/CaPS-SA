@@ -10,6 +10,7 @@
 #include <immintrin.h>
 #include <cstdlib>
 #include <iostream>
+#include <chrono>
 
 
 // =============================================================================
@@ -19,6 +20,10 @@ namespace CaPS_SA
     // Returns pointer to a memory-allocation for `size` elements of type `T_`.
     template <typename T_>
     inline T_* allocate(std::size_t size) { return static_cast<T_*>(std::malloc(size * sizeof(T_))); }
+
+    typedef std::chrono::high_resolution_clock::time_point time_point_t;
+    constexpr auto now = std::chrono::high_resolution_clock::now;   // Time right now.
+    constexpr auto duration = [](const std::chrono::nanoseconds& d) { return std::chrono::duration_cast<std::chrono::duration<double>>(d).count(); };
 
 
 namespace Debug

@@ -11,7 +11,6 @@
 #include <cstring>
 #include <cstddef>
 #include <atomic>
-#include <chrono>
 #include <immintrin.h>
 #include <iostream>
 #include <vector>
@@ -105,11 +104,6 @@ private:
 
     static constexpr idx_t default_subproblem_count = 8192; // Default subproblem-count to use in construction.
     static constexpr idx_t nested_par_grain_size = (1lu << 13); // Granularity for nested parallelism to kick in.
-
-    // Fields for profiling time.
-    typedef std::chrono::high_resolution_clock::time_point time_point_t;
-    constexpr static auto now = std::chrono::high_resolution_clock::now;
-    constexpr static auto duration = [](const std::chrono::nanoseconds& d) { return std::chrono::duration_cast<std::chrono::duration<double>>(d).count(); };
 
 
     // Returns the LCP length of `x` and `y`, where `min_len` is the length of
