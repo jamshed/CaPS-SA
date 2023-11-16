@@ -12,11 +12,12 @@
 #include <filesystem>
 
 
-// Reads the input string at file-path `ip_path`, pads it with 8 empty characters,
-// and returns the size of the read string.
-// TODO: use `char*` to avoid the initialized-resize of `std::string`.
-std::size_t read_and_pad_input(const std::string& ip_path, std::string& text)
+// Reads the input string at file-path `ip_path` into `text`, pads it with 8
+// empty characters, and returns the size of the read string.
+std::size_t read_and_pad_input(const std::string& ip_path, char*& text)
 {
+    const auto t_i = CaPS_SA::now();
+
     std::error_code ec;
     const auto file_size = std::filesystem::file_size(ip_path, ec);
 
@@ -26,10 +27,14 @@ std::size_t read_and_pad_input(const std::string& ip_path, std::string& text)
         std::exit(EXIT_FAILURE);
     }
 
-    text.resize(file_size + 8);
+    text = CaPS_SA::allocate<char>(file_size + 8);
     std::ifstream input(ip_path);
-    input.read(text.data(), file_size);
+    input.read(text, file_size);
     input.close();
+
+    const auto t_e = CaPS_SA::now();
+    std::cerr << "Time to read input: " << CaPS_SA::duration(t_e - t_i) << "s.\n";
+
     return file_size;
 }
 
@@ -73,7 +78,7 @@ int main(int argc, char* argv[])
 
 
 
-    std::string text;
+    char* text = nullptr;
     const std::size_t n = read_and_pad_input(ip_path, text);
 
     std::ofstream output(op_path);
@@ -81,7 +86,7 @@ int main(int argc, char* argv[])
     std::cerr << "Text length: " << n << ".\n";
     if(n <= std::numeric_limits<uint32_t>::max())
     {
-        CaPS_SA::Suffix_Array<uint32_t> suf_arr(text.data(), n, subproblem_count, max_context);
+        CaPS_SA::Suffix_Array<uint32_t> suf_arr(text, n, subproblem_count, max_context);
         suf_arr.construct();
         suf_arr.dump(output);
 
@@ -90,7 +95,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        CaPS_SA::Suffix_Array<uint64_t> suf_arr(text.data(), n, subproblem_count, max_context);
+        CaPS_SA::Suffix_Array<uint64_t> suf_arr(text, n, subproblem_count, max_context);
         suf_arr.construct();
         suf_arr.dump(output);
 
@@ -99,6 +104,7 @@ int main(int argc, char* argv[])
     }
 
     output.close();
+    std::free(text);
 
 
     return 0;
