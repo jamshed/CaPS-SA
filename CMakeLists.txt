@@ -26,8 +26,10 @@ set(WARNING_FLAGS -Wall -Wextra -Wcast-align)
 # Extra optimization flags not associated to the `-O` levels.
 set(OPTIMIZE_FLAGS -Ofast -mavx2 -funroll-loops -march=native)
 
-# 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+# Turn on address-sanitizer if specified. Ref: https://clang.llvm.org/docs/AddressSanitizer.html
+if(CAPS_SA_ADDRESS_SANITIZER)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+endif()
 
 
 # Determine the thread library of the system.
