@@ -59,6 +59,7 @@ public:
     void print() const;
 };
 
+constexpr uint64_t bt_lookup[] = { 64, (32-1)*2, (32-2)*2, (32-3)*2 };
 
 inline __m256i Bit_Packed_Text::load(const std::size_t i) const
 {
@@ -71,12 +72,11 @@ inline __m256i Bit_Packed_Text::load(const std::size_t i) const
     if(!base_trail)
         return blk;
 
-
+    const auto r_shifted_words = _mm256_permute4x64_epi64(blk, 0b11'11'10'01);
+    const auto to_clear_l = _mm256_set1_epi64x(bt_lookup[base_trail]);//(32 - base_trail) * 2);
+    const auto lost_bits = _mm256_sllv_epi64(r_shifted_words, to_clear_l);
     const auto to_clear_r = _mm256_set1_epi64x(base_trail * 2);
     const auto trail_cleared = _mm256_srlv_epi64(blk, to_clear_r);
-    const auto r_shifted_words = _mm256_permute4x64_epi64(blk, 0b11'11'10'01);
-    const auto to_clear_l = _mm256_set1_epi64x((32 - base_trail) * 2);
-    const auto lost_bits = _mm256_sllv_epi64(r_shifted_words, to_clear_l);
     const auto restored = _mm256_or_si256(trail_cleared, lost_bits);
 
     return restored;
