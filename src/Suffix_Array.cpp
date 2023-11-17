@@ -159,7 +159,8 @@ void Suffix_Array<T_idx_>::insertion_sort(idx_t* const X, idx_t* const Y, const 
     {
         const idx_t max_n = n_ - std::max(Y[i], Y[i - 1]);  // Length of the shorter suffix.
         const idx_t context = std::min(max_context, max_n); // Prefix-context length for the suffixes.
-        LCP[i] = lcp_opt_avx_unrolled(T_ + Y[i], T_ + Y[i - 1], context);
+        //LCP[i] = lcp_opt_avx_unrolled(T_ + Y[i], T_ + Y[i - 1], context);
+        LCP[i] = lcp(Y[i], Y[i - 1], context);
     }
 }
 
@@ -663,7 +664,8 @@ void Suffix_Array<T_idx_>::compute_partition_boundary_lcp()
         [&](const idx_t j)
         {
           const auto part_idx = part_size_scan_[j];
-          LCP_[part_idx] = lcp_opt_avx_unrolled(T_ + SA_[part_idx - 1], T_ + SA_[part_idx], n_ - std::max(SA_[part_idx - 1], SA_[part_idx]));
+          //LCP_[part_idx] = lcp_opt_avx_unrolled(T_ + SA_[part_idx - 1], T_ + SA_[part_idx], n_ - std::max(SA_[part_idx - 1], SA_[part_idx]));
+          LCP_[part_idx] = lcp(SA_[part_idx - 1], SA_[part_idx], n_ - std::max(SA_[part_idx - 1], SA_[part_idx]));
         };
 
     parlay::parallel_for(1, p_, compute_boundary_lcp, 1);

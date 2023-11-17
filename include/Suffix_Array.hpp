@@ -246,12 +246,14 @@ inline bool Suffix_Array<T_idx_>::suf_less(const idx_t x, const idx_t y) const
 {
     const idx_t max_n = n_ - std::max(x, y);  // Length of the shorter suffix.
     const idx_t context = std::min(max_context, max_n); // Prefix-context length for the suffixes.
-    const idx_t lcp = lcp_opt_avx_unrolled(T_ + x, T_ + y, context);
+    //const idx_t lcp = lcp_opt_avx_unrolled(T_ + x, T_ + y, context);
 
-    if(lcp == max_n)
+  const idx_t lcpv = lcp(x, y, context);
+
+    if(lcpv == max_n)
         return x > y;
 
-    return T_[x + lcp] < T_[y + lcp];
+    return T_[x + lcpv] < T_[y + lcpv];
 }
 
 
