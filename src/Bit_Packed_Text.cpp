@@ -7,15 +7,15 @@ namespace CaPS_SA
 {
 
 Bit_Packed_Text::Bit_Packed_Text(const char* T, std::size_t n):
-      T(T)
-    , n(n)
+    n(n)
     , pack_sz((n + 3) / 4)
     , B(T != nullptr ? allocate<uint8_t>(pack_sz + 8) : nullptr)    // +1 to support 124-nucleobase loads.
-{}
-
-
-void Bit_Packed_Text::construct()
 {
+  construct(T);
+}
+
+
+void Bit_Packed_Text::construct(const char* T) {
     const auto base_code =
         [](char ch)
         {

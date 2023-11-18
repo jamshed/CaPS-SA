@@ -78,7 +78,11 @@ int main(int argc, char* argv[])
     std::cerr << "text length: " << n << ".\n";
     if(n <= std::numeric_limits<uint32_t>::max())
     {
-        CaPS_SA::Suffix_Array<uint32_t> suf_arr(text.data(), n, subproblem_count, max_context);
+        CaPS_SA::Bit_Packed_Text bp_text(text.data(), n);
+        // don't need the original text anymore
+        text.clear();
+        text.shrink_to_fit();
+        CaPS_SA::Suffix_Array<uint32_t> suf_arr(std::move(bp_text), n, subproblem_count, max_context);
         suf_arr.construct();
         suf_arr.dump(output);
 
@@ -86,7 +90,12 @@ int main(int argc, char* argv[])
     }
     else
     {
-        CaPS_SA::Suffix_Array<uint64_t> suf_arr(text.data(), n, subproblem_count, max_context);
+        CaPS_SA::Bit_Packed_Text bp_text(text.data(), n);
+        // don't need the original text anymore
+        text.clear();
+        text.shrink_to_fit();
+
+        CaPS_SA::Suffix_Array<uint64_t> suf_arr(std::move(bp_text), n, subproblem_count, max_context);
         suf_arr.construct();
         suf_arr.dump(output);
 

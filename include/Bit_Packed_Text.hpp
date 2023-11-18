@@ -24,7 +24,7 @@ class Bit_Packed_Text
 {
 private:
 
-    const char* const T;    // The input text.
+    //const char* const T;    // The input text.
     const std::size_t n;    // Length of the input text.
 
     const std::size_t pack_sz;  // Size of the bit-pack.
@@ -50,9 +50,11 @@ public:
 
     // Constructs an object for 2-bit-packing a genomic text `T` of length `n`.
     Bit_Packed_Text(const char* T = nullptr, std::size_t n = 0);
+    Bit_Packed_Text(const Bit_Packed_Text& o) = default;
+    Bit_Packed_Text(Bit_Packed_Text&& o) = default;
 
     // Constructs the bit-packed representation.
-    void construct();
+    void construct(const char* T);
 
     // Returns the 28-nucleobase block from the `i`'th character, in 64-bits
     // little-endian. No guarantees are provided on the highest byte. 
@@ -175,13 +177,6 @@ inline std::size_t Bit_Packed_Text::LCP(const std::size_t x, const std::size_t y
 
         i += blk_sz, j += blk_sz, lcp += blk_sz;
     }
-
-    /*
-    while(lcp < ctx && B[x + lcp] == B[y + lcp]) {
-        lcp++;
-    }
-    return lcp;
-    */
 
     uint64_t r = 28;
     while(lcp < ctx and r == 28) {

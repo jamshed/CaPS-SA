@@ -15,10 +15,31 @@ namespace CaPS_SA
 {
 
 template <typename T_idx_>
-Suffix_Array<T_idx_>::Suffix_Array(const char* const T, const idx_t n, const idx_t subproblem_count, const idx_t max_context):
-    T_(T),
+Suffix_Array<T_idx_>::Suffix_Array(Bit_Packed_Text&& B_in, const idx_t n, const idx_t subproblem_count, const idx_t max_context):
     n_(n),
-    B(T, n_),
+    B(std::move(B_in)),
+    SA_(allocate<idx_t>(n_)),
+    LCP_(allocate<idx_t>(n_)),
+    SA_w(nullptr),
+    LCP_w(nullptr),
+    p_(subproblem_count > 0 ? subproblem_count : default_subproblem_count),
+    max_context(max_context ? max_context : n_),
+    pivot_(nullptr),
+    pivot_per_part_(std::min(static_cast<idx_t>(std::ceil(32.0 * std::log(n_))), n_ / p_)), // (c \ln n) or (n / p)
+    part_size_scan_(nullptr),
+    part_ruler_(nullptr)
+{
+    if(p_ > n_)
+    {
+        std::cerr << "Incompatible subproblem-count. Aborting.\n";
+        std::exit(EXIT_FAILURE);
+    }
+}
+
+template <typename T_idx_>
+Suffix_Array<T_idx_>::Suffix_Array(const Bit_Packed_Text& B_in, const idx_t n, const idx_t subproblem_count, const idx_t max_context):
+    n_(n),
+    B(B_in),
     SA_(allocate<idx_t>(n_)),
     LCP_(allocate<idx_t>(n_)),
     SA_w(nullptr),
@@ -38,8 +59,9 @@ Suffix_Array<T_idx_>::Suffix_Array(const char* const T, const idx_t n, const idx
 }
 
 
+
 template <typename T_idx_>
-Suffix_Array<T_idx_>::Suffix_Array(const Suffix_Array& other): Suffix_Array(other.T_, other.n_)
+Suffix_Array<T_idx_>::Suffix_Array(const Suffix_Array& other): Suffix_Array(other.B, other.n_)
 {
     std::memcpy(SA_, other.SA_, n_ * sizeof(idx_t));
     std::memcpy(LCP_, other.LCP_, n_ * sizeof(idx_t));
@@ -79,12 +101,9 @@ void Suffix_Array<T_idx_>::merge(const idx_t* X, idx_t len_x, const idx_t* Y, id
         {
             const idx_t max_n = n_ - std::max(X[i], Y[j]);  // Length of the shorter suffix.
             const idx_t context = std::min(max_context, max_n); // Prefix-context length for the suffixes.
-            // const idx_t n = m + lcp_opt_avx_unrolled(T_ + (X[i] + m), T_ + (Y[j] + m), context - m); // LCP(X_i, Y_j)
             const idx_t n = m + lcp((X[i] + m), (Y[j] + m), context - m); // LCP(X_i, Y_j)
 
             // Whether the shorter suffix is a prefix of the longer one.
-            //Z[k] = (n == max_n ?    std::max(X[i], Y[j]) :
-            //                        (T_[X[i] + n] < T_[Y[j] + n] ? X[i] : Y[j]));
             Z[k] = (n == max_n ?    std::max(X[i], Y[j]) :
                                       (B[X[i] + n] < B[Y[j] + n] ? X[i] : Y[j]));
             LCP_z[k] = (Z[k] == X[i] ? l_x : m);
@@ -161,7 +180,6 @@ void Suffix_Array<T_idx_>::insertion_sort(idx_t* const X, idx_t* const Y, const 
     {
         const idx_t max_n = n_ - std::max(Y[i], Y[i - 1]);  // Length of the shorter suffix.
         const idx_t context = std::min(max_context, max_n); // Prefix-context length for the suffixes.
-        //LCP[i] = lcp_opt_avx_unrolled(T_ + Y[i], T_ + Y[i - 1], context);
         LCP[i] = lcp(Y[i], Y[i - 1], context);
     }
 }
@@ -172,10 +190,8 @@ void Suffix_Array<T_idx_>::initialize()
 {
     const auto t_s = now();
 
-    B.construct();
-
-    SA_w = allocate<idx_t>(n_); // Working space for the SA construction.
     LCP_w = allocate<idx_t>(n_);    // Working space for the LCP construction.
+  SA_w = allocate<idx_t>(n_); // Working space for the SA construction.
 
     const auto sample_count = p_ * pivot_per_part_;
     pivot_ = allocate<idx_t>(sample_count);
@@ -310,27 +326,6 @@ bool build_prefix_table(const T_idx_* const X, const T_idx_ n,
       uint16_t u = seq_as_u16(&T[start_pos]);
       // keep the smallest offset sharing this prefix
       lookup.insert(u, offset);
-      /*
-      auto po = lookup.get_offset(u);
-      if (po.prefix != u) { 
-        std::cerr << "prefix = " << po.prefix << ", but u = " << u  << "\n";
-        std::exit(1);
-      }
-      std::string ref(&T[start_pos], 8);
-      if (ref.size() != 8) {
-        std::cerr << "what the hell! requested 9 characters but got " << ref.size() << "!\n";
-        std::cerr << "there sould be " << len - start_pos << " characters left in the string\n";
-        std::exit(1);
-      }
-      std::string decode = u16_as_seq(u);
-      if (decode != ref) {
-        std::cerr << "ref = " << ref << ", but decode = " << decode << "\n";
-        std::cerr << "last character is (" << ref[ref.size()-1] << ")\n";
-        std::cerr << "position is " << start_pos + 7 << "\n";
-        std::cerr << "there sould be " << len - start_pos << " characters left in the string\n";
-        std::exit(1);
-      }
-      */
     } 
   } 
   lookup.finish(n);
@@ -354,7 +349,11 @@ void Suffix_Array<T_idx_>::locate_pivots(idx_t* const P) const
 
             const auto tot_subarr_size = subarr_size + (i < p_ - 1 ? 0 : n_ % p_);
             P_i[0] = 0, P_i[p_] = tot_subarr_size; // The two flanking pivot indices.
-            
+            for(idx_t j = 0; j < p_ - 1; ++j) { // TODO: try parallelizing this loop too; observe performance diff.
+                P_i[j + 1] = upper_bound_bitpacked(X_i, P_i[p_], pivot_[j], n_ - pivot_[j]);
+            }
+
+            /* 
             constexpr bool use_lookup = false;//tot_subarr_size >= 512;
             if (use_lookup) {
               PrefixLookupTab lookup;
@@ -367,6 +366,7 @@ void Suffix_Array<T_idx_>::locate_pivots(idx_t* const P) const
                 P_i[j + 1] = upper_bound_bitpacked(X_i, P_i[p_], pivot_[j], n_ - pivot_[j]);
               }
             }
+            */
         };
 
     parlay::parallel_for(0, p_, locate, 1);
@@ -375,6 +375,7 @@ void Suffix_Array<T_idx_>::locate_pivots(idx_t* const P) const
     std::cerr << "Located the pivots in each sorted subarray. Time taken: " << duration(t_e - t_s) << " seconds.\n";
 }
 
+/*
 template <typename T_idx_>
 T_idx_ Suffix_Array<T_idx_>::upper_bound_with_lookup(const idx_t* const X, const idx_t n, 
                                                      const char* const P, const idx_t P_len, 
@@ -427,6 +428,7 @@ T_idx_ Suffix_Array<T_idx_>::upper_bound_with_lookup(const idx_t* const X, const
     }
     return soln;
 }
+*/
 
 template <typename T_idx_>
 inline T_idx_ Suffix_Array<T_idx_>::upper_bound_bitpacked(const idx_t* const X, const idx_t n, const idx_t P_offset, const idx_t P_len) const
@@ -477,7 +479,7 @@ inline T_idx_ Suffix_Array<T_idx_>::upper_bound_bitpacked(const idx_t* const X, 
     return soln;
 }
 
-
+/*
 template <typename T_idx_>
 T_idx_ Suffix_Array<T_idx_>::upper_bound(const idx_t* const X, const idx_t n, const char* const P, const idx_t P_len) const
 {
@@ -523,6 +525,7 @@ T_idx_ Suffix_Array<T_idx_>::upper_bound(const idx_t* const X, const idx_t n, co
 
     return soln;
 }
+*/
 
 
 template <typename T_idx_>
@@ -744,13 +747,13 @@ bool Suffix_Array<T_idx_>::is_sorted(const idx_t* const X, const idx_t n) const
     parlay::parallel_for(1, n,
         [&](const std::size_t i)
         {
-            const auto x = T_ + X[i - 1], y = T_ + X[i];
+            const auto x_off = X[i - 1], y_off = X[i];
             const auto l = std::min(std::min(n_ - X[i - 1], n_ - X[i]), max_context);
 
-            for(idx_t i = 0; i < l; ++i)
-                if(x[i] < y[i])
+            for(idx_t j = 0; i < l; ++j)
+                if(B[x_off + j] < B[y_off + j])
                     break;
-                else if(x[i] > y[i])
+                else if(B[x_off + j] > B[y_off + j])
                 {
                     R[parlay::worker_id()] = 0;
                     break;
