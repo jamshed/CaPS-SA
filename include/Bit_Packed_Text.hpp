@@ -37,6 +37,16 @@ private:
 
 
 public:
+    // return a pointer to the underlying uint8_t array 
+    // containing the binary encoded string.
+    inline uint8_t* getB() const { return B; }
+
+    inline uint8_t operator[](const std::size_t i) const {
+      constexpr uint8_t top_mask = 0b00000011;
+      uint64_t widx = i / 4;
+      const auto mask = (i & 3);
+      return (B[widx] >> mask * 2) & top_mask;
+    }
 
     // Constructs an object for 2-bit-packing a genomic text `T` of length `n`.
     Bit_Packed_Text(const char* T = nullptr, std::size_t n = 0);
@@ -47,6 +57,8 @@ public:
     // Returns the 28-nucleobase block from the `i`'th character, in 64-bits
     // little-endian. No guarantees are provided on the highest byte. 
     uint64_t load28(std::size_t i) const;
+    uint64_t loadWord(const std::size_t i, const uint8_t s) const;
+
 
     uint64_t loadSmall(const std::size_t i, uint32_t ctx) const;
 
@@ -121,6 +133,17 @@ inline uint64_t Bit_Packed_Text::load28(const std::size_t i) const
     return w >> base_trail;
 }
 
+inline uint64_t Bit_Packed_Text::loadWord(const std::size_t i, const uint8_t base_trail) const
+{
+
+    assert(i + 32 <= n);
+    const auto w_idx = i / 4;
+
+    uint64_t w;
+    std::memcpy(reinterpret_cast<char*>(&w), B + w_idx, 8);
+
+    return w >> base_trail;
+}
 
 inline std::size_t Bit_Packed_Text::LCP(const std::size_t x, const std::size_t y, const std::size_t ctx) const
 {
@@ -153,7 +176,23 @@ inline std::size_t Bit_Packed_Text::LCP(const std::size_t x, const std::size_t y
         i += blk_sz, j += blk_sz, lcp += blk_sz;
     }
 
-    uint64_t r = 8;
+    /*
+    while(lcp < ctx && B[x + lcp] == B[y + lcp]) {
+        lcp++;
+    }
+    return lcp;
+    */
+
+    uint64_t r = 28;
+    while(lcp < ctx and r == 28) {
+      uint64_t v_x = load28(x + lcp);
+      uint64_t v_y = load28(y + lcp);
+      r = std::min(28, std::countr_zero(v_x ^ v_y) >> 3);
+      lcp += std::min(r, ctx - lcp);
+    }
+    return lcp;
+    
+    /*uint64_t r = 8;
     while(lcp < ctx and r == 8) {
       uint64_t v_x, v_y;
       std::memcpy(reinterpret_cast<char*>(&v_x), T + x + lcp, 8);
@@ -162,6 +201,7 @@ inline std::size_t Bit_Packed_Text::LCP(const std::size_t x, const std::size_t y
       lcp += std::min(r, ctx - lcp);
     }
     return lcp;
+    */
 
     /*
     while(lcp < ctx && T[x + lcp] == T[y + lcp]) {

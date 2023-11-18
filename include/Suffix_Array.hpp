@@ -253,7 +253,8 @@ inline bool Suffix_Array<T_idx_>::suf_less(const idx_t x, const idx_t y) const
     if(lcpv == max_n)
         return x > y;
 
-    return T_[x + lcpv] < T_[y + lcpv];
+    //return T_[x + lcpv] < T_[y + lcpv];
+    return B[x + lcpv] < B[y + lcpv];
 }
 
 
@@ -272,7 +273,7 @@ template <typename T_idx_>
 inline T_idx_ Suffix_Array<T_idx_>::lcp(const idx_t x, const idx_t y, const idx_t ctx) const
 {
  
-  constexpr bool use_char_prefix = true; 
+  constexpr bool use_char_prefix = false; 
   if constexpr (use_char_prefix) {
     const idx_t bctx = (ctx <= 8) ? ctx : 8;
     uint64_t v_x, v_y;
@@ -281,25 +282,35 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const idx_t x, const idx_t y, const idx_
     // if this is < 8, we definitely have an LCP of length < 8.
     // if this is == 8, then we have an LCP of length 8 if ctx == 8.
     // otherwise, we have an LCP of length at least 8.
-    uint64_t r = std::countr_zero(v_x ^ v_y) >> 3;
+    uint64_t r = (v_x == v_y) ? 8 : __builtin_ctzll(v_x ^ v_y) >> 3;
     return (r < 8) ? r : ((ctx > 8) ? bctx + B.LCP(x + bctx, y + bctx, ctx - bctx) : ctx);
   } else { 
-    // ctx and 28.
+    uint64_t sx = (x & 3) << 1;
+    uint64_t sy = (y & 3) << 1;
+    const auto max_mask = 32 - ((sx > sy) ? sx : sy);
+
     // bctx is the minimum of the input context length 
-    const idx_t bctx = (ctx <= 28) ? ctx : 28;
+    // ctx and 28.
+    const idx_t bctx = (ctx <= max_mask) ? ctx : max_mask;
 
     // load the suffixes starting at x and y (28 characters of each)
     // NOTE: If the length 28 suffixes starting at either x or y 
     // exceed the text length, the result will be padded with 0s (`A`s).
     // However, later we will take the min of the context length and the 
     // LCP we compute, so a longer LCP here won't matter.
-    uint64_t v_x = B.load28(x);
-    uint64_t v_y = B.load28(y);
+    //uint64_t v_x = B.load28(x);
+    //uint64_t v_y = B.load28(y);
+    uint8_t* BT = B.getB();
+    uint64_t v_x, v_y;
+    std::memcpy(reinterpret_cast<char*>(&v_x), BT + (x/4), 8);
+    v_x >>= sx;
+    std::memcpy(reinterpret_cast<char*>(&v_y), BT + (y/4), 8);
+    v_y >>= sy;
 
     // The length of the LCP shared between T[x:] and T[y:], up to 
     // length 28 (could be longer than the actual LCP if 
     // T[x:], T[y:], or both are of length < 28).
-    uint64_t r = std::countr_zero((v_x ^ v_y)) >> 1;
+    uint64_t r = (v_x == v_y) ? max_mask : __builtin_ctzll((v_x ^ v_y)) >> 1;
 
     // If the computed LCP is less than the bounded context length,
     // then it must be correct. Otherwise, if the context length 
@@ -307,7 +318,7 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const idx_t x, const idx_t y, const idx_
     // r >= ctx, but ctx <= 28, then we simply return the context 
     // length (the LCPs match through the end).
     return (r < bctx) ? r : 
-    ((ctx > 28) ? bctx + B.LCP(x + bctx, y + bctx, ctx - bctx) : bctx);
+    ((ctx > bctx) ? bctx + B.LCP(x + bctx, y + bctx, ctx - bctx) : bctx);
   }
 }
 

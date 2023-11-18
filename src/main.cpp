@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
         suf_arr.construct();
         suf_arr.dump(output);
 
-        // std::cerr << "Sortedness: " << suf_arr.is_sorted(suf_arr.SA(), suf_arr.n()) << "\n";
+        //std::cerr << "Sortedness: " << suf_arr.is_sorted(suf_arr.SA(), suf_arr.n()) << "\n";
     }
     else
     {

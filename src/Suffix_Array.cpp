@@ -83,8 +83,10 @@ void Suffix_Array<T_idx_>::merge(const idx_t* X, idx_t len_x, const idx_t* Y, id
             const idx_t n = m + lcp((X[i] + m), (Y[j] + m), context - m); // LCP(X_i, Y_j)
 
             // Whether the shorter suffix is a prefix of the longer one.
+            //Z[k] = (n == max_n ?    std::max(X[i], Y[j]) :
+            //                        (T_[X[i] + n] < T_[Y[j] + n] ? X[i] : Y[j]));
             Z[k] = (n == max_n ?    std::max(X[i], Y[j]) :
-                                    (T_[X[i] + n] < T_[Y[j] + n] ? X[i] : Y[j]));
+                                      (B[X[i] + n] < B[Y[j] + n] ? X[i] : Y[j]));
             LCP_z[k] = (Z[k] == X[i] ? l_x : m);
             m = n;
         }
@@ -362,7 +364,6 @@ void Suffix_Array<T_idx_>::locate_pivots(idx_t* const P) const
               }
             } else {
               for(idx_t j = 0; j < p_ - 1; ++j) { // TODO: try parallelizing this loop too; observe performance diff.
-                //P_i[j + 1] = upper_bound(X_i, P_i[p_], T_ + pivot_[j], n_ - pivot_[j]);
                 P_i[j + 1] = upper_bound_bitpacked(X_i, P_i[p_], pivot_[j], n_ - pivot_[j]);
               }
             }
@@ -438,11 +439,11 @@ inline T_idx_ Suffix_Array<T_idx_>::upper_bound_bitpacked(const idx_t* const X, 
     idx_t lcp_l = 0, lcp_r = 0; // LCP(s, SA[l]) and LCP(s, SA[r]).
   	idx_t approx = 65536;   // TODO: better tune and document.
 
-    const char* P = T_ + P_offset;
+    //const char* P = T_ + P_offset;
     while(r - l > 1)    // Candidate matches exist.
     {
         c = (l + r) / 2;
-        const char* const suf = T_ + X[c];  // The suffix at the middle.
+        //const char* const suf = T_ + X[c];  // The suffix at the middle.
         const idx_t suff_offset = X[c];
         const auto suf_len = n_ - X[c]; // Length of the suffix.
 
@@ -466,12 +467,12 @@ inline T_idx_ Suffix_Array<T_idx_>::upper_bound_bitpacked(const idx_t* const X, 
                 l = c, lcp_l = lcp_c;
         }
         else    // Neither is a prefix of the other.
-            if(suf[lcp_c] < P[lcp_c])   // X[c] < P
+            //if(suf[lcp_c] < P[lcp_c])   // X[c] < P
+            if (B[X[c] + lcp_c] < B[P_offset + lcp_c]) // X[c] < P
                 l = c, lcp_l = lcp_c;
             else    // P < X[c]
                 r = c, lcp_r = lcp_c, soln = c;
     }
-
 
     return soln;
 }
