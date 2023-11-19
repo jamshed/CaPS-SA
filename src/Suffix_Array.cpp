@@ -725,14 +725,16 @@ void Suffix_Array<T_idx_>::construct()
 
 
 template <typename T_idx_>
-void Suffix_Array<T_idx_>::dump(std::ofstream& output)
+void Suffix_Array<T_idx_>::dump(std::ofstream& output, bool with_lcp)
 {
     const auto t_start = now();
 
     const std::size_t n = n_;
     output.write(reinterpret_cast<const char*>(&n), sizeof(std::size_t));
     output.write(reinterpret_cast<const char*>(SA_), n_ * sizeof(idx_t));
-    output.write(reinterpret_cast<const char*>(LCP_), n_ * sizeof(idx_t));
+    if (with_lcp) { 
+      output.write(reinterpret_cast<const char*>(LCP_), n_ * sizeof(idx_t));
+    }
 
     const auto t_end = now();
     std::cerr << "Dumped the suffix array. Time taken: " << duration(t_end - t_start) << " seconds.\n";
@@ -750,7 +752,7 @@ bool Suffix_Array<T_idx_>::is_sorted(const idx_t* const X, const idx_t n) const
             const auto x_off = X[i - 1], y_off = X[i];
             const auto l = std::min(std::min(n_ - X[i - 1], n_ - X[i]), max_context);
 
-            for(idx_t j = 0; i < l; ++j)
+            for(idx_t j = 0; j < l; ++j)
                 if(B[x_off + j] < B[y_off + j])
                     break;
                 else if(B[x_off + j] > B[y_off + j])

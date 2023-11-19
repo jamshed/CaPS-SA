@@ -239,7 +239,7 @@ public:
     void construct();
 
     // Dumps the suffix array and the LCP array into the stream `output`.
-    void dump(std::ofstream& output);
+    void dump(std::ofstream& output, bool with_lcp=true);
 
     // Returns true iff `X` is a valid (partial) suffix array with size `n`.
     // TODO: add LCP-array check.

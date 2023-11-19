@@ -89,20 +89,19 @@ int main(int argc, char* argv[])
         text.shrink_to_fit();
         CaPS_SA::Suffix_Array<uint32_t> suf_arr(std::move(bp_text), n, subproblem_count, max_context);
         suf_arr.construct();
-        suf_arr.dump(output);
-
+        suf_arr.dump(output, false);
         //std::cerr << "Sortedness: " << suf_arr.is_sorted(suf_arr.SA(), suf_arr.n()) << "\n";
     }
     else
     {
+    // don't need the original text anymore
         CaPS_SA::Bit_Packed_Text bp_text(text.data(), n);
-        // don't need the original text anymore
         text.clear();
         text.shrink_to_fit();
 
         CaPS_SA::Suffix_Array<uint64_t> suf_arr(std::move(bp_text), n, subproblem_count, max_context);
         suf_arr.construct();
-        suf_arr.dump(output);
+        suf_arr.dump(output, false);
 
         // std::cerr << "Sortedness: " << suf_arr.is_sorted(suf_arr.SA(), suf_arr.n()) << "\n";
     }
