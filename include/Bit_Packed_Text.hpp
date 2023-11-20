@@ -42,6 +42,10 @@ public:
     inline uint8_t* getB() const { return B; }
 
     inline uint8_t operator[](const std::size_t i) const {
+      if (i >= n + 8) { 
+        std::cerr << "accessing B out of bounds at " << i << ", padded size is " << n + 8 << "\n"; 
+        std::exit(1);
+      }
       constexpr uint8_t top_mask = 0b00000011;
       uint64_t widx = i / 4;
       const auto mask = (i & 3);
@@ -182,9 +186,16 @@ inline std::size_t Bit_Packed_Text::LCP(const std::size_t x, const std::size_t y
     while(lcp < ctx and r == 28) {
       uint64_t v_x = load28(x + lcp);
       uint64_t v_y = load28(y + lcp);
-      r = std::min(28, std::countr_zero(v_x ^ v_y) >> 3);
+      r = std::min(28, std::countr_zero(v_x ^ v_y) >> 1);
       lcp += std::min(r, ctx - lcp);
     }
+    
+  /*
+    while (lcp < ctx && this->operator[](x + lcp) == this->operator[](y + lcp)) { 
+      ++lcp;
+    }
+    */
+    
     return lcp;
     
     /*uint64_t r = 8;
