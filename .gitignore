@@ -41,3 +41,9 @@ scripts/
 
 # Julian Shun's SA library
 suffixTree
+
+# Generator
+gen/*
+!gen/*.*
+!gen/*/
+!gen/Makefile
