@@ -4,7 +4,7 @@ INCLUDE_DIR=include
 
 CXX=g++
 
-ifndef D
+ifdef D
 	OPT=-g -O0
 else
 	OPT=-O3 -DNDEBUG
