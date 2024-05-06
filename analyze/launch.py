@@ -13,7 +13,7 @@ parser.add_argument('--gen_len', type=int, default=2**27)
 args = parser.parse_args()
 
 if args.vary not in ['wc', 'wl']:
-    print(f"--vary has to be one of {wc, wl}, not {args.vary}")
+    print(f"--vary has to be one of (wc, wl), not {args.vary}")
     exit()
 if args.powers and len(args.powers) != 2:
     print('need to have 2 ints for the --powers range')
