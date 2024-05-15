@@ -19,7 +19,19 @@ struct memoization_table {
     }
 
     index_t manual_lcp(char *str, size_t len, index_t a, index_t b) {
-        
+        index_t limit = std::min(len - a, len - b);
+
+        index_t lcp = 0;
+        __m256i suff_a = _mm256_loadu_si256((__m256i*)&str[a]);
+        __m256i suff_b = _mm256_loadu_si256((__m256i*)&str[b]);
+
+        __m256i cmp = _mm256_cmpeq_epi8(suff_a, suff_b);
+        int mask = _mm256_movemask_epi8(cmp);
+
+        if (mask != 0xFFFFFFFF) {
+            int index = __builtin_ctz(~mask);
+            return index;
+        }
     }
 
     index_t get_lcp(char *str, size_t len, index_t a, index_t b) {
