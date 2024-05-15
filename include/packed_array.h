@@ -6,6 +6,10 @@
 #include <iostream>
 #include <fstream>
 
+#include <immintrin.h>
+
+#define BITS_PER_CHAR 2
+
 #define BITMASK(X) ((1ull << X) - 1)
 #define DIV_ROUND_UP(X, Y) ((X - 1) / Y) + 1
 #define BYTE_ROUND_UP(BITS) ((BITS + 7) / 8)
@@ -71,5 +75,15 @@ public:
 		uint64_t *value = (uint64_t*)&data[byte_offset];
 		*value = *value & ~(BITMASK(int_size) << bit_offset) | ((x & BITMASK(int_size)) << bit_offset);
 	}
+
+    size_t lcp(index_t a, index_t b) {
+        size_t lcp = 0;
+
+        __m256i suff_a = _mm256_loadu_si256((__m256i*)&data[a]);
+
+        __m256i eq = _mm256_cmpeq_epi8(suff_a, suff_b);
+        int mask = _mm256_movemask_epi8(eq);
+
+    }
 };
 

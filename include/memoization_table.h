@@ -6,8 +6,6 @@
 
 #include <parlay/sequence.h>
 
-#define BITS_PER_CHAR 2
-
 template <typename index_t = size_t>
 struct memoization_table {
     using prefix_t = std::pair<index_t, index_t>;
@@ -18,6 +16,10 @@ struct memoization_table {
     memoization_table(index_t n) {
         diagonals = parlay::sequence<parlay::sequence<prefix_t>>(n);
         locks = std::vector<std::mutex>(n);
+    }
+
+    index_t manual_lcp(char *str, size_t len, index_t a, index_t b) {
+        
     }
 
     index_t get_lcp(char *str, size_t len, index_t a, index_t b) {
