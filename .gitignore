@@ -47,3 +47,5 @@ gen/*
 !gen/*.*
 !gen/*/
 !gen/Makefile
+
+*.swp
