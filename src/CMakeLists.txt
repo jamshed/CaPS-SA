@@ -22,6 +22,7 @@ target_compile_options(core PRIVATE ${WARNING_FLAGS} ${OPTIMIZE_FLAGS})
 
 # Executable for the driver program.
 add_executable(${PROJECT_NAME} main.cpp)
+add_executable(unit_mem unit_mem.cpp)
 
 
 # Add dependency of the core to parlaylib.
@@ -32,10 +33,12 @@ target_link_libraries(core PRIVATE Threads::Threads)
 
 # Link the executable to the core.
 target_link_libraries(${PROJECT_NAME} PRIVATE core)
+target_link_libraries(unit_mem PRIVATE OpenSSL::SSL OpenSSL::Crypto core)
 
 
 # Compiler flags for the target.
 target_compile_options(${PROJECT_NAME} PRIVATE ${WARNING_FLAGS} ${OPTIMIZE_FLAGS})
+target_compile_options(unit_mem PRIVATE ${WARNING_FLAGS} ${OPTIMIZE_FLAGS})
 
 
 # Installation directory.
