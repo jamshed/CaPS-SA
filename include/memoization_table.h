@@ -20,10 +20,11 @@ struct memoization_table {
         locks = std::vector<std::mutex>(n);
     }
 
-    index_t manual_lcp(char *str, index_t len, index_t a, index_t b, index_t n) {
+    index_t manual_lcp(const char *str, index_t len, index_t a, index_t b, index_t n) {
         if (a == b) {
             return len - a;
         }
+        n = std::min(n, std::min(len - a, len - b));
 
         index_t lcp = 0;
         for (index_t i = 0; i < n; i += 32) {
@@ -41,7 +42,7 @@ struct memoization_table {
         return std::min(n, lcp);
     }
 
-    index_t get_lcp(char *str, size_t len, index_t a, index_t b, index_t known_lcp) {
+    index_t get_lcp(const char *str, size_t len, index_t a, index_t b, index_t known_lcp) {
         index_t early_lcp = manual_lcp(str, len, a + known_lcp, b + known_lcp, 32);
         if (early_lcp < 32) return known_lcp + early_lcp;
         early_lcp += known_lcp;
