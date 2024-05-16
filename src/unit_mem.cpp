@@ -10,6 +10,8 @@
 #define DIV_ROUND_UP(X, Y) ((X - 1) / Y + 1)
 #define ROUND_UP(X, Y) (DIV_ROUND_UP(X, Y) * Y)
 
+#define INPUT_TYPE 1
+
 using index_t = uint32_t;
 
 index_t lcp(char *str, index_t len, index_t a, index_t b) {
@@ -28,7 +30,23 @@ int main() {
     const char nucl_map[4] = {'A', 'C', 'G', 'T'};
     RAND_bytes((unsigned char*)&string[0], DIV_ROUND_UP(n, 4));
     for (int i = n - 1; i >= 0; i--) {
-        string[i] = nucl_map[(string[i >> 2] & (0b11 << (i & 0b11))) >> (i & 0b11)];
+        switch (INPUT_TYPE) {
+        case 0: {
+            string[i] = nucl_map[(string[i >> 2] & (0b11 << (i & 0b11))) >> (i & 0b11)];
+            break;
+        }
+        case 1: {
+            int j = i / 16;
+            string[i] = nucl_map[(string[j >> 2] & (0b11 << (j & 0b11))) >> (j & 0b11)];
+            break;
+        }
+        case 2: {
+            string[i] = 'A';
+            break;
+        }
+        default:
+            exit(0);
+        }
     }
 
     memoization_table<index_t> mem_table(n);
