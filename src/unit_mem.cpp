@@ -28,7 +28,7 @@ int main() {
     const char nucl_map[4] = {'A', 'C', 'G', 'T'};
     RAND_bytes((unsigned char*)&string[0], DIV_ROUND_UP(n, 4));
     for (int i = n - 1; i >= 0; i--) {
-        string[i] = 'A';//nucl_map[(string[i >> 2] & (0b11 << (i & 0b11))) >> (i & 0b11)];
+        string[i] = nucl_map[(string[i >> 2] & (0b11 << (i & 0b11))) >> (i & 0b11)];
     }
 
     memoization_table<index_t> mem_table(n);
