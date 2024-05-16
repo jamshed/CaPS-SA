@@ -68,13 +68,13 @@ private:
     // Merges the sorted collections of suffixes, `X` and `Y`, with lengths
     // `len_x` and `len_y` and LCP arrays `LCP_x` and `LCP_y` respectively, into
     // `Z`. Also constructs `Z`'s LCP array in `LCP_z`.
-    void merge(const idx_t* X, idx_t len_x, const idx_t* Y, idx_t len_y, const idx_t* LCP_x, const idx_t* LCP_y, idx_t* Z, idx_t* LCP_z) const;
+    void merge(const idx_t* X, idx_t len_x, const idx_t* Y, idx_t len_y, const idx_t* LCP_x, const idx_t* LCP_y, idx_t* Z, idx_t* LCP_z);
 
     // Merge-sorts the suffix collection `X` of length `n` into `Y`. Also
     // constructs the LCP array of `X` in `LCP`, using `W` as working space.
     // A necessary precondition is that `Y` must be equal to `X`.  `X` may
     // not remain the same after the sort.
-    void merge_sort(idx_t* X, idx_t* Y, idx_t n, idx_t* LCP, idx_t* W) const;
+    void merge_sort(idx_t* X, idx_t* Y, idx_t n, idx_t* LCP, idx_t* W);
 
     // Initializes internal data structures for the construction algorithm.
     void initialize();

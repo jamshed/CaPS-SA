@@ -26,7 +26,8 @@ Suffix_Array<T_idx_>::Suffix_Array(const char* const T, const idx_t n, const idx
     pivot_(nullptr),
     pivot_per_part_(p_ - 1),
     part_size_scan_(nullptr),
-    part_ruler_(nullptr)
+    part_ruler_(nullptr),
+    mem_table(n)
 {
     if(p_ == 0)
     {
@@ -53,7 +54,7 @@ Suffix_Array<T_idx_>::~Suffix_Array()
 
 
 template <typename T_idx_>
-void Suffix_Array<T_idx_>::merge(const idx_t* X, idx_t len_x, const idx_t* Y, idx_t len_y, const idx_t* LCP_x, const idx_t* LCP_y, idx_t* Z, idx_t* LCP_z) const
+void Suffix_Array<T_idx_>::merge(const idx_t* X, idx_t len_x, const idx_t* Y, idx_t len_y, const idx_t* LCP_x, const idx_t* LCP_y, idx_t* Z, idx_t* LCP_z)
 {
     idx_t m = 0;    // LCP of the last compared pair.
     idx_t l_x;  // LCP(X_i, X_{i - 1}).
@@ -76,8 +77,9 @@ void Suffix_Array<T_idx_>::merge(const idx_t* X, idx_t len_x, const idx_t* Y, id
         else    // Compute LCP of X_i and Y_j through linear scan.
         {
             const idx_t max_n = n_ - std::max(X[i], Y[j]);  // Length of the shorter suffix.
-            const idx_t context = std::min(max_context, max_n); // Prefix-context length for the suffixes.
-            const idx_t n = m + lcp_opt_avx(T_ + (X[i] + m), T_ + (Y[j] + m), context - m); // LCP(X_i, Y_j)
+            //const idx_t context = std::min(max_context, max_n); // Prefix-context length for the suffixes.
+            //const idx_t n = m + lcp_opt_avx(T_ + (X[i] + m), T_ + (Y[j] + m), context - m); // LCP(X_i, Y_j)
+            const idx_t n = mem_table.get_lcp(T_, n_, X[i], Y[j], m);
 
             // Whether the shorter suffix is a prefix of the longer one.
             Z[k] = (n == max_n ?    std::max(X[i], Y[j]) :
@@ -115,7 +117,7 @@ void Suffix_Array<T_idx_>::merge(const idx_t* X, idx_t len_x, const idx_t* Y, id
 
 
 template <typename T_idx_>
-void Suffix_Array<T_idx_>::merge_sort(idx_t* const X, idx_t* const Y, const idx_t n, idx_t* const LCP, idx_t* const W) const
+void Suffix_Array<T_idx_>::merge_sort(idx_t* const X, idx_t* const Y, const idx_t n, idx_t* const LCP, idx_t* const W)
 {
     assert(std::memcmp(X, Y, n * sizeof(idx_t)) == 0);
 
@@ -428,7 +430,8 @@ void Suffix_Array<T_idx_>::compute_partition_boundary_lcp()
         [&](const idx_t j)
         {
           const auto part_idx = part_size_scan_[j];
-          LCP_[part_idx] = lcp_opt_avx(T_ + SA_[part_idx - 1], T_ + SA_[part_idx], n_ - std::max(SA_[part_idx - 1], SA_[part_idx]));
+          //LCP_[part_idx] = lcp_opt_avx(T_ + SA_[part_idx - 1], T_ + SA_[part_idx], n_ - std::max(SA_[part_idx - 1], SA_[part_idx]));
+          LCP_[part_idx] = mem_table.get_lcp(T_, n_, SA_[part_idx - 1], SA_[part_idx], 0);
         };
 
     parlay::parallel_for(1, p_, compute_boundary_lcp, 1);
