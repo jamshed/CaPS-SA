@@ -9,11 +9,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--vary', type=str, default='wc')
 parser.add_argument('--gen', type=str, default='adv') # adv(ersarial) or unif(orm)
 parser.add_argument('--powers', nargs='+', type=int, default=None)
+parser.add_argument('--gen_pows', nargs='+', type=int, default=None)
 parser.add_argument('--gen_len', type=int, default=2**27)
 args = parser.parse_args()
 
-if args.vary not in ['wc', 'wl']:
-    print(f"--vary has to be one of (wc, wl), not {args.vary}")
+valid_vary = ['wc', 'wl', 'len']
+if args.vary not in valid_vary:
+    print(f"--vary has to be one of {valid_vary}, not {args.vary}")
     exit()
 if args.powers and len(args.powers) != 2:
     print('need to have 2 ints for the --powers range')
@@ -42,8 +44,9 @@ if args.gen.lower() == 'unif':
         times_file = "times-" + input_file
 
         # generate adversarial input
-        subprocess.run(['../gen/unif_gen', input_file, str(gen_length)])
-
+        proc = subprocess.Popen(['../gen/unif_gen', input_file, str(gen_length)])
+        proc.wait()
+        
         # run the job, capture output
         bash_text = zaratan_template.format(num_procs, input_file, SA_file, times_file)
 
@@ -56,25 +59,32 @@ if args.gen.lower() == 'unif':
 # fix word count or word length, and vary the other.
 rango, wc, wl = [0]*3
 if args.vary == 'wc':
-    rango = wc_pow
-else:
-    rango = wl_pow
+    rango = range(wc_pow)
+elif args.vary == 'wl':
+    rango = range(wl_pow)
+elif args.vary == 'len':
+    rango = range(args.gen_pows[0], args.gen_pows[1] + 1)
 
-for i in range(rango):
+for i in rango:
     if args.vary == 'wc':
         wc = 2**(i+1)
         wl = 2**wl_pow
-    else:
+    elif args.vary == 'wl':
         wc = 2**wc_pow
         wl = 2**(i+1)
+    elif args.vary == 'len':
+        wc = wc_pow
+        wl = wl_pow
+        args.gen_len = 2**i
 
     input_file = f"adv-{args.gen_len}-{wc}-{wl}.out"
     SA_file = "SA-" + input_file
     times_file = "times-" + input_file
 
     # generate adversarial input
-    subprocess.run(['../gen/adv_gen', input_file, str(args.gen_len), str(wc), str(wl)])
-        
+    proc = subprocess.Popen(['../gen/adv_gen', input_file, str(args.gen_len), str(wc), str(wl)])
+    proc.wait()
+    
     # run the job, capture output
     bash_text = zaratan_template.format(num_procs, input_file, SA_file, times_file)
         
