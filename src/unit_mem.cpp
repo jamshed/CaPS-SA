@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include <openssl/rand.h>
+#include <parlay/parallel.h>
 
 #include "memoization_table.h"
 
@@ -51,9 +52,9 @@ int main() {
 
     memoization_table<index_t> mem_table(n);
     
-    const int num_tests = 10000;
+    const int num_tests = 100000;
     srand(time(NULL));
-    for (int i = 0; i < num_tests; i++) {
+    parlay::parallel_for(0, num_tests, [&] (size_t i) {
         int a = rand() % n, b = rand() % n;
         int exp_lcp = lcp(string, n, a, b);
         int obt_lcp = mem_table.get_lcp(string, n, a, b, 0);
@@ -61,7 +62,7 @@ int main() {
             std::cout << "lcp(" << a << ", " << b << ") is wrong" << std::endl;
             mem_table.get_lcp(string, n, a, b, 0);
         }
-    }
+    });
 
     std::cout << "Done" << std::endl;
     return 0;
