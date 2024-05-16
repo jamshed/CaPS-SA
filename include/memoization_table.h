@@ -41,9 +41,10 @@ struct memoization_table {
         return std::min(n, lcp);
     }
 
-    index_t get_lcp(char *str, size_t len, index_t a, index_t b) {
-        index_t early_lcp = manual_lcp(str, len, a, b, 32);
-        if (early_lcp < 32) return early_lcp;
+    index_t get_lcp(char *str, size_t len, index_t a, index_t b, index_t known_lcp) {
+        index_t early_lcp = manual_lcp(str, len, a + known_lcp, b + known_lcp, 32);
+        if (early_lcp < 32) return known_lcp + early_lcp;
+        early_lcp += known_lcp;
 
         if (a == b) {
             return len - a;

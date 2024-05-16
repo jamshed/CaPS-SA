@@ -56,10 +56,10 @@ int main() {
     for (int i = 0; i < num_tests; i++) {
         int a = rand() % n, b = rand() % n;
         int exp_lcp = lcp(string, n, a, b);
-        int obt_lcp = mem_table.get_lcp(string, n, a, b);
+        int obt_lcp = mem_table.get_lcp(string, n, a, b, 0);
         if (exp_lcp != obt_lcp) {
             std::cout << "lcp(" << a << ", " << b << ") is wrong" << std::endl;
-            mem_table.get_lcp(string, n, a, b);
+            mem_table.get_lcp(string, n, a, b, 0);
         }
     }
 
