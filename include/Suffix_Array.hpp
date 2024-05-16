@@ -11,6 +11,8 @@
 #include <chrono>
 #include <immintrin.h>
 #include <iostream>
+
+#include "memoization_table.h"
 // =============================================================================
 
 namespace CaPS_SA
@@ -38,6 +40,8 @@ private:
     idx_t* part_size_scan_; // Inclusive scan (prefix sum) of the sizes of the pivoted final partitions containing appropriate sorted sub-subarrays.
     idx_t* part_ruler_; // "Ruler" for the partitions—contains the indices of each sub-subarray in each partition.
     std::atomic_uint64_t solved_;   // Progress tracker—number of subproblems solved in some step.
+
+    memoization_table<idx_t> mem_table;
 
     static constexpr idx_t default_subproblem_count = 8192; // Default subproblem-count to use in construction.
     static constexpr idx_t nested_par_grain_size = (1lu << 13); // Granularity for nested parallelism to kick in.
@@ -180,7 +184,7 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp_opt_avx(const char* str1, const char* st
       __m256i v1 = _mm256_loadu_si256((__m256i*)(str1 + i));
       __m256i v2 = _mm256_loadu_si256((__m256i*)(str2 + i));
       __m256i cmp = _mm256_cmpeq_epi8(v1, v2);
-      int mask = _mm256_movemask_epi8(cmp);
+      uint32_t mask = _mm256_movemask_epi8(cmp);
       if (mask != 0xFFFFFFFF) {
         int j = __builtin_ctz(~mask) + i;
         return static_cast<idx_t>(j);
