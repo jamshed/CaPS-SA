@@ -83,7 +83,6 @@ public:
 
         __m256i eq = _mm256_cmpeq_epi8(suff_a, suff_b);
         int mask = _mm256_movemask_epi8(eq);
-
     }
 };
 

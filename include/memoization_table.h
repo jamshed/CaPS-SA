@@ -24,7 +24,7 @@ struct memoization_table {
         if (a == b) {
             return len - a;
         }
-        n = std::min(n, std::min(len - a, len - b));
+        n = std::min(n, len - std::max(a, b));
 
         index_t lcp = 0;
         for (index_t i = 0; i < n; i += 32) {
