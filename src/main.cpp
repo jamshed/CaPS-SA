@@ -1,6 +1,7 @@
 
 #include "Suffix_Array.hpp"
 #include "parlay/parallel.h"
+#include "ghc/filesystem.hpp"
 
 #include <algorithm>
 #include <string>
@@ -8,13 +9,12 @@
 #include <limits>
 #include <fstream>
 #include <iostream>
-#include <filesystem>
 
 
 void read_input(const std::string& ip_path, std::string& text)
 {
     std::error_code ec;
-    const auto file_size = std::filesystem::file_size(ip_path, ec);
+    const auto file_size = ghc::filesystem::file_size(ip_path, ec);
 
     if(ec)
     {
