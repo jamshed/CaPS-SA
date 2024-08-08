@@ -238,9 +238,9 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const char* const x, const char* const y
 }
 
 #define LCPCMP(N, IDX_T) \
-      __m256i v1 ## N = simde_mm256_loadu_si256((__m256i*)(str1 + i + N));\
-      __m256i v2 ## N = simde_mm256_loadu_si256((__m256i*)(str2 + i + N));\
-      __m256i cmp ## N = simde_mm256_cmpeq_epi8(v1##N, v2##N);\
+      simde__m256i v1 ## N = simde_mm256_loadu_si256((simde__m256i*)(str1 + i + N));\
+      simde__m256i v2 ## N = simde_mm256_loadu_si256((simde__m256i*)(str2 + i + N));\
+      simde__m256i cmp ## N = simde_mm256_cmpeq_epi8(v1##N, v2##N);\
       int mask ## N = simde_mm256_movemask_epi8(cmp##N);\
       if (mask ## N != static_cast<int>(0xFFFFFFFF)) {\
         int j = __builtin_ctz(~mask ## N) + i + N;\
@@ -287,9 +287,9 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp_opt_avx_unrolled(const char* str1, const
 
   if ((len - i) >= 32) {
     for (; i <= len - 32; i += 32) {
-      __m256i v1 = simde_mm256_loadu_si256((__m256i*)(str1 + i));
-      __m256i v2 = simde_mm256_loadu_si256((__m256i*)(str2 + i));
-      __m256i cmp = simde_mm256_cmpeq_epi8(v1, v2);
+      simde__m256i v1 = simde_mm256_loadu_si256((simde__m256i*)(str1 + i));
+      simde__m256i v2 = simde_mm256_loadu_si256((simde__m256i*)(str2 + i));
+      simde__m256i cmp = simde_mm256_cmpeq_epi8(v1, v2);
       int mask = simde_mm256_movemask_epi8(cmp);
       if (mask != static_cast<int>(0xFFFFFFFF)) {
         int j = __builtin_ctz(~mask) + i;
@@ -313,9 +313,9 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp_opt_avx(const char* str1, const char* st
   int64_t len = static_cast<int64_t>(len_in);
   if (len >= 32) {
     for (; i <= len - 32; i += 32) {
-      __m256i v1 = simde_mm256_loadu_si256((__m256i*)(str1 + i));
-      __m256i v2 = simde_mm256_loadu_si256((__m256i*)(str2 + i));
-      __m256i cmp = simde_mm256_cmpeq_epi8(v1, v2);
+      simde__m256i v1 = simde_mm256_loadu_si256((simde__m256i*)(str1 + i));
+      simde__m256i v2 = simde_mm256_loadu_si256((simde__m256i*)(str2 + i));
+      simde__m256i cmp = simde_mm256_cmpeq_epi8(v1, v2);
       int mask = simde_mm256_movemask_epi8(cmp);
       if (mask != static_cast<int>(0xFFFFFFFF)) {
         int j = __builtin_ctz(~mask) + i;
