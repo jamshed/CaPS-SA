@@ -4,16 +4,16 @@
 
 
 
+#include "x86/avx2.h"
+
 #include <cstdint>
 #include <cstddef>
 #include <atomic>
 #include <cstdlib>
 #include <chrono>
-#include <immintrin.h>
-#include <iostream>
 #include <vector>
+#include <fstream>
 
-// #include "meow_hash_x64_aesni.h"
 // =============================================================================
 
 namespace CaPS_SA

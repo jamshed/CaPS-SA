@@ -54,6 +54,25 @@ ExternalProject_Add(prj_parlaylib
 )
 
 
+# Prepare the `simde` library—provides implementations of SIMD instructions for
+# systems without native SIMD support.
+set(SIMDE_MIN_VERSION "0.8.2")
+message("Build system will fetch and install simde")
+ExternalProject_Add(prj_simde
+    DOWNLOAD_DIR        ${CMAKE_SOURCE_DIR}/external
+    DOWNLOAD_COMMAND    curl -k -L https://github.com/simd-everywhere/simde/releases/download/v${SIMDE_MIN_VERSION}/simde-amalgamated-${SIMDE_MIN_VERSION}.tar.xz -o simde-amalgamated-${SIMDE_MIN_VERSION}.tar.xz &&
+                        tar -xf simde-amalgamated-${SIMDE_MIN_VERSION}.tar.xz &&
+                        rm simde-amalgamated-${SIMDE_MIN_VERSION}.tar.xz
+
+    SOURCE_DIR          ${CMAKE_SOURCE_DIR}/external/simde-amalgamated-${SIMDE_MIN_VERSION}
+    BUILD_IN_SOURCE     TRUE
+    INSTALL_DIR         ${CMAKE_SOURCE_DIR}/external
+    CONFIGURE_COMMAND   ""
+    BUILD_COMMAND       ""
+    INSTALL_COMMAND     cp -rf x86 ${EXT_INCLUDE}
+)
+
+
 # Default build type.
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build Type" FORCE)

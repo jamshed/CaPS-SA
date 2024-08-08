@@ -24,8 +24,8 @@ target_compile_options(core PRIVATE ${WARNING_FLAGS} ${OPTIMIZE_FLAGS})
 add_executable(${PROJECT_NAME} main.cpp)
 
 
-# Add dependency of the core to parlaylib.
-add_dependencies(core prj_parlaylib)
+# Add dependencies of the core.
+add_dependencies(core prj_parlaylib prj_simde)
 
 # Link the core lib to the threads lib.
 target_link_libraries(core PRIVATE Threads::Threads)
