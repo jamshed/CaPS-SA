@@ -20,11 +20,50 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 
+if(ASAN OR UBSAN)
+    set(CMAKE_C_COMPILER clang)
+    set(CMAKE_CXX_COMPILER clang++)
+    # set(CMAKE_LINKER_TYPE LLD)
+endif()
+
 # Warning flags.
-set(WARNING_FLAGS -Wall -Wextra)
+set(WARNING_FLAGS -Wall -Wextra -Wpedantic)
+
+# Bundle debugging information flags that we want to conditionally
+# pass on to the compiler.
+# Reference: https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html.
+set(DEBUG_FLAGS -ggdb)
+
+# Bundle address sanitization flags: https://github.com/google/sanitizers/wiki/AddressSanitizer.
+set(ASAN_FLAGS -fsanitize=address -fno-omit-frame-pointer)
+# set(ASAN_LINK_FLAGS -static-libasan)
+
+# Bundle undefined behavior sanitization flags: https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html.
+set(UBSAN_FLAGS -fsanitize=undefined
+                -fsanitize=float-divide-by-zero #-fsanitize=unsigned-integer-overflow
+                -fsanitize=implicit-conversion -fsanitize=local-bounds -fsanitize=nullability)
+# set(UBSAN_LINK_FLAGS -fuse-ld=lld)
 
 # Extra optimization flags not associated to the `-O` levels.
 set(OPTIMIZE_FLAGS -Ofast -mavx2 -funroll-loops -march=native)
+
+
+# Accumulate the compile- and link-flags.
+set(COMPILE_FLAGS "")
+set(LINK_FLAGS "")
+
+# Specify the warnings and the extra optimization flags to the compiler for the target library.
+list(APPEND COMPILE_FLAGS ${WARNING_FLAGS} ${OPTIMIZE_FLAGS})
+
+if(ASAN)
+    list(APPEND COMPILE_FLAGS ${ASAN_FLAGS} ${DEBUG_FLAGS})
+    list(APPEND LINK_FLAGS ${ASAN_LINK_FLAGS} ${ASAN_FLAGS})
+endif()
+
+if(UBSAN)
+    list(APPEND COMPILE_FLAGS ${UBSAN_FLAGS} ${DEBUG_FLAGS})
+    list(APPEND LINK_FLAGS ${UBSAN_LINK_FLAGS} ${UBSAN_FLAGS})
+endif()
 
 
 # Determine the thread library of the system.
