@@ -66,6 +66,10 @@ if(UBSAN)
 endif()
 
 
+# Add the required preprocessor definitions (`#define`s) to pass on.
+add_compile_definitions(CMAKE_EXPORT_COMPILE_COMMANDS)  # For better `clangd` scanning.
+
+
 # Determine the thread library of the system.
 include(FindThreads)
 if(NOT Threads_FOUND)
