@@ -28,6 +28,7 @@ endif()
 
 # Warning flags.
 set(WARNING_FLAGS -Wall -Wextra -Wpedantic)
+set(SUPPRESS_WARNING_FLAGS -Wno-self-assign-overloaded)
 
 # Bundle debugging information flags that we want to conditionally
 # pass on to the compiler.
@@ -53,7 +54,7 @@ set(COMPILE_FLAGS "")
 set(LINK_FLAGS "")
 
 # Specify the warnings and the extra optimization flags to the compiler for the target library.
-list(APPEND COMPILE_FLAGS ${WARNING_FLAGS} ${OPTIMIZE_FLAGS})
+list(APPEND COMPILE_FLAGS ${WARNING_FLAGS} ${SUPPRESS_WARNING_FLAGS} ${OPTIMIZE_FLAGS})
 
 if(ASAN)
     list(APPEND COMPILE_FLAGS ${ASAN_FLAGS} ${DEBUG_FLAGS})

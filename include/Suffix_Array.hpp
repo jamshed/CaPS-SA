@@ -5,76 +5,17 @@
 
 
 #include <cstdint>
-#include <cstddef>
 #include <atomic>
 #include <cstdlib>
+#include <fstream>
 #include <chrono>
-#include <immintrin.h>
-#include <iostream>
-#include <vector>
 
-// #include "meow_hash_x64_aesni.h"
+#include <immintrin.h>
+
 // =============================================================================
 
 namespace CaPS_SA
 {
-
-struct PrefixLookupTab {
-  static constexpr uint16_t context_len = 8;
-  std::vector<uint64_t> entries;
-  std::vector<int64_t> breakpoints;
-  bool empty = true;
-  uint16_t last = 0;
-  int64_t max_breakpoint = 0;
-
-  PrefixLookupTab() {
-    entries.resize(65536, std::numeric_limits<uint64_t>::max());
-    breakpoints.push_back(0);
-  }
-
-  inline bool insert(uint16_t u, uint64_t offset) {
-    if ((u > last) or empty) {
-      entries[u] = breakpoints.size();
-      breakpoints.push_back(offset);
-      last = u;
-      empty = false;
-      return true;
-    }
-    return false;
-  }
-  
-  void finish(uint64_t n) { 
-    breakpoints.push_back(n); 
-    max_breakpoint = n;
-  }
-
-  void fill() {
-    uint64_t prev = 0;
-    for (size_t i = 0; i < entries.size(); ++i) {
-      // fill in sentinel values with the previous value
-      if (entries[i] == std::numeric_limits<uint64_t>::max()) {
-        entries[i] = prev;
-      } else {
-        prev = entries[i];
-      }
-    }
-  }
-
-  std::pair<uint64_t, uint64_t> get(uint16_t u) const {
-    auto i = entries[u];
-    return std::make_pair(breakpoints[i], breakpoints[i+1]);
-  }
-
-  inline std::pair<int64_t, int64_t> get_expanded(uint16_t u) const {
-    auto i = entries[u];
-    auto start = breakpoints[i]; --start; 
-    auto stop = breakpoints[i+1];
-    stop = std::min(stop + 1, max_breakpoint);//(stop <  breakpoints.back()) ? stop + 1 : breakpoints.back();
-    return std::make_pair(start, stop);
-  }
-
-  size_t size() const { return entries.size(); }
-};
 
 // The Suffix Array (SA) and the Longest Common Prefix (LCP) array constructor
 // class for some given sequence.
@@ -158,9 +99,6 @@ private:
     // length `n` such that `X[idx]` is strictly greater than the query pattern
     // `P` of length `P_len`.
     idx_t upper_bound(const idx_t* X, idx_t n, const char* P, idx_t P_len) const;
-    idx_t upper_bound_with_lookup(const idx_t* X, idx_t n, const char* P, idx_t P_len, 
-                                  const PrefixLookupTab& lookup) const;
-
 
     // Collates the sub-subarrays delineated by the pivot locations in each
     // sorted subarray, present in `P`, into appropriate partitions.
@@ -200,12 +138,12 @@ public:
     // `max_context`.
     Suffix_Array(const char* T, idx_t n, idx_t subproblem_count = 0, idx_t max_context = 0);
 
-    // Copy constructs the suffix array object from `other`.
-    Suffix_Array(const Suffix_Array& other);
+    Suffix_Array(const Suffix_Array&) = delete;
+    Suffix_Array& operator=(const Suffix_Array&) = delete;
+    Suffix_Array(Suffix_Array&&) = delete;
+    Suffix_Array& operator=(Suffix_Array&&) = delete;
 
     ~Suffix_Array();
-
-    const Suffix_Array& operator=(const Suffix_Array& rhs) = delete;
 
     // Returns the text.
     const char* T() const { return T_; }
