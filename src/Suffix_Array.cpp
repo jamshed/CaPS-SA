@@ -163,6 +163,7 @@ void Suffix_Array<T_idx_>::sort_subarrays()
     const auto t_s = now();
 
     const auto subarr_size = n_ / p_;   // Size of each subarray to be sorted independently.
+    std::atomic_uint64_t solved_ = 0;   // Progress tracker—number of subproblems solved in some step.
     const auto sort_subarr =
         [&](const idx_t i)
         {
@@ -174,7 +175,6 @@ void Suffix_Array<T_idx_>::sort_subarrays()
                 std::cerr << "\rSorted " << solved_ << " subarrays.";
         };
 
-    solved_ = 0;
     parlay::parallel_for(0, p_, sort_subarr, 1);
     std::cerr << "\n";
 
@@ -382,6 +382,7 @@ void Suffix_Array<T_idx_>::merge_sub_subarrays()
     parlay::parallel_for(0, p_, mem_init, 1);   // Fulfill `sort_partition`'s precondition.
 
 
+    std::atomic_uint64_t solved_ = 0;   // Progress tracker—number of subproblems solved in some step.
     const auto sort_part =
         [&](const idx_t j)
         {
@@ -398,7 +399,6 @@ void Suffix_Array<T_idx_>::merge_sub_subarrays()
                 std::cerr << "\rMerged " << solved_ << " partitions.";
         };
 
-    solved_ = 0;
     parlay::parallel_for(0, p_, sort_part, 1);  // Merge the sorted subarrays in each partitions.
     std::cerr << "\n";
 
