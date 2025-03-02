@@ -80,6 +80,9 @@ private:
     // Initializes internal data structures for the construction algorithm.
     void initialize();
 
+    // Populates the suffix array with some permutation of `[0, len)`.
+    void permute();
+
     // Sorts uniform-sized subarrays independently.
     void sort_subarrays();
 

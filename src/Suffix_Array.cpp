@@ -143,12 +143,22 @@ void Suffix_Array<T_idx_>::initialize()
 
 
 template <typename T_idx_>
-void Suffix_Array<T_idx_>::sort_subarrays()
+void Suffix_Array<T_idx_>::permute()
 {
     const auto t_s = now();
 
-    const auto mem_init = [SA_ = SA_, SA_w = SA_w](const idx_t i){ SA_[i] = SA_w[i] = i; };
-    parlay::parallel_for(0, n_, mem_init);
+    const auto populate = [&](const idx_t i){ SA_[i] = SA_w[i] = i; };
+    parlay::parallel_for(0, n_, populate);
+
+    const auto t_e = now();
+    std::cerr << "Populated the suffix array with a permutation. Time taken: " << duration(t_e - t_s) << " seconds.\n";
+}
+
+
+template <typename T_idx_>
+void Suffix_Array<T_idx_>::sort_subarrays()
+{
+    const auto t_s = now();
 
     const auto subarr_size = n_ / p_;   // Size of each subarray to be sorted independently.
     const auto sort_subarr =
@@ -456,6 +466,8 @@ void Suffix_Array<T_idx_>::construct()
     const auto t_start = now();
 
     initialize();
+
+    permute();
 
     // merge_sort(SA_w, SA_, n_, LCP_, LCP_w);  // Monolithic construction.
     sort_subarrays();
