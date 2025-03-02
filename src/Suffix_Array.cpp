@@ -21,13 +21,15 @@ Suffix_Array<T_idx_>::Suffix_Array(const char* const T, const idx_t n, const idx
     LCP_(allocate<idx_t>(n_)),
     SA_w(nullptr),
     LCP_w(nullptr),
-    p_(subproblem_count > 0 ? subproblem_count : default_subproblem_count),
+    p_(std::min(subproblem_count > 0 ? subproblem_count : default_subproblem_count, n / 16)),   // TODO: fix subproblem-count for small `n`.
     max_context(max_context ? max_context : n_),
     pivot_(nullptr),
-    pivot_per_part_(std::min(static_cast<idx_t>(std::ceil(32.0 * std::log(n_))), n_ / p_)), // (c \ln n) or (n / p)
+    pivot_per_part_(static_cast<idx_t>(std::ceil(32.0 * std::log(n_)))), // c \ln n
     part_size_scan_(nullptr),
     part_ruler_(nullptr)
 {
+    assert(n_ >= 16);   // TODO: fix subproblem-count for small `n`.
+
     if(p_ > n_)
     {
         std::cerr << "Incompatible subproblem-count. Aborting.\n";
