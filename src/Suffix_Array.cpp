@@ -41,8 +41,7 @@ Suffix_Array<T_idx_>::Suffix_Array(const char* const T, const idx_t n, const idx
 template <typename T_idx_>
 Suffix_Array<T_idx_>::~Suffix_Array()
 {
-    std::free(SA_);
-    std::free(LCP_);
+    deallocate(SA_), deallocate(LCP_);
 }
 
 
@@ -214,7 +213,7 @@ void Suffix_Array<T_idx_>::select_pivots()
 
     sample_pivots(pivot_w, sample_count, p_ - 1, pivot_);
 
-    std::free(pivot_w), std::free(temp_1), std::free(temp_2);
+    deallocate(pivot_w), deallocate(temp_1), deallocate(temp_2);
 
     const auto t_e = now();
     std::cerr << "Selected the global pivots. Time taken: " << duration(t_e - t_s) << " seconds.\n";
@@ -450,12 +449,11 @@ void Suffix_Array<T_idx_>::clean_up()
 {
     const auto t_s = now();
 
-    std::free(SA_w);
-    std::free(LCP_w);
+    deallocate(SA_w), deallocate(LCP_w);
 
-    std::free(pivot_);
-    std::free(part_size_scan_);
-    std::free(part_ruler_);
+    deallocate(pivot_);
+    deallocate(part_size_scan_);
+    deallocate(part_ruler_);
 
     const auto t_e = now();
     std::cerr << "Released the temporary data structures. Time taken: " << duration(t_e - t_s) << " seconds.\n";
@@ -479,7 +477,7 @@ void Suffix_Array<T_idx_>::construct()
     idx_t* const P = allocate<idx_t>(p_ * (p_ + 1));  // Collection of pivot locations in the subarrays.
     locate_pivots(P);
     partition_sub_subarrays(P);
-    std::free(P);
+    deallocate(P);
 
     merge_sub_subarrays();
 

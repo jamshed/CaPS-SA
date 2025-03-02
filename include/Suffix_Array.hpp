@@ -128,6 +128,10 @@ private:
     template <typename T_>
     static T_* allocate(idx_t size) { return static_cast<T_*>(std::malloc(size * sizeof(T_))); }
 
+    // Deallocates the pointer `ptr`, allocated with `allocate`.
+    template <typename T_>
+    static void deallocate(T_* const ptr) { std::free(ptr); }
+
     // Returns true iff `X` is a valid (partial) suffix array with size `n`.
     bool is_sorted(const idx_t* X, idx_t n) const;
 
