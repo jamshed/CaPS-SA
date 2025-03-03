@@ -250,27 +250,27 @@ void Suffix_Array<T_idx_>::locate_pivots(idx_t* const P) const
 template <typename T_idx_>
 T_idx_ Suffix_Array<T_idx_>::upper_bound(const idx_t* const X, const idx_t n, const char* const P, const idx_t P_len) const
 {
-    // Invariant: SA[l] < s < SA[r].
+    // Invariant: SA[l] < P < SA[r].
 
     int64_t l = -1, r = n;  // (Exclusive-) Range of the iterations in the binary search.
     idx_t c;    // Midpoint in each iteration.
     idx_t soln = n; // Solution of the search.
-    idx_t lcp_l = 0, lcp_r = 0; // LCP(s, SA[l]) and LCP(s, SA[r]).
-	idx_t approx = 65536;   // TODO: better tune and document.
+    idx_t lcp_l = 0, lcp_r = 0; // LCP(P, SA[l]) and LCP(P, SA[r]).
+	constexpr idx_t cutoff = 65536; // TODO: better tune and document.
 
     while(r - l > 1)    // Candidate matches exist.
     {
         c = (l + r) / 2;
-        const char* const suf = T_ + X[c];  // The suffix at the middle.
+        auto const suf = T_ + X[c]; // The suffix at the middle.
         const auto suf_len = n_ - X[c]; // Length of the suffix.
 
         idx_t lcp_c = std::min(lcp_l, lcp_r);   // LCP(X[c], P).
-        lcp_c = std::min(lcp_c, approx);   // LCP(X[c], P).
+        lcp_c = std::min(lcp_c, cutoff);
         auto max_lcp = std::min(std::min(suf_len, P_len), max_context); // Maximum possible LCP, i.e. length of the shorter string.
-		    max_lcp = std::min(max_lcp, approx);
+        max_lcp = std::min(max_lcp, cutoff);
         lcp_c += lcp_opt_avx_unrolled(suf + lcp_c, P + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
 
-        if(lcp_c == max_lcp)    // One is a prefix of the other.
+        if(lcp_c == max_lcp)    // One is a prefix of the other, or they align at least up-to the context- or the cutoff-length.
         {
             if(lcp_c == P_len)  // P is a prefix of the suffix.
             {
@@ -280,9 +280,10 @@ T_idx_ Suffix_Array<T_idx_>::upper_bound(const idx_t* const X, const idx_t n, co
                     r = c, lcp_r = lcp_c, soln = c;
             }
             else    // The suffix is a prefix of the query, so X[c] < P; technically impossible if the text terminates with $.
+                    // Or, their relevant prefixes align; moving to the right, as searching for the upper-bound.
                 l = c, lcp_l = lcp_c;
         }
-        else    // Neither is a prefix of the other.
+        else    // They mismatch within their relevant prefixes.
             if(suf[lcp_c] < P[lcp_c])   // X[c] < P
                 l = c, lcp_l = lcp_c;
             else    // P < X[c]
