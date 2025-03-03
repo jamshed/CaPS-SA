@@ -25,8 +25,8 @@ Suffix_Array<T_idx_>::Suffix_Array(const char* const T, const idx_t n, const idx
     max_context(max_context ? max_context : n_),
     pivot_(nullptr),
     pivot_per_part_(std::min(static_cast<idx_t>(std::ceil(32.0 * std::log(n_))), n_ / p_ - 1)), // (c \ln n) or (|subarray| - 1)
-    part_size_scan_(nullptr),
-    part_ruler_(nullptr)
+    part_size_scan_(allocate<idx_t>(p_ + 1)),
+    part_ruler_(allocate<idx_t>(p_ * (p_ + 1)))
 {
     assert(n_ >= 16);   // TODO: fix subproblem-count for small `n`.
 
@@ -300,8 +300,6 @@ void Suffix_Array<T_idx_>::partition_sub_subarrays(const idx_t* const P)
 {
     const auto t_s = now();
 
-    part_size_scan_ = allocate<idx_t>(p_ + 1);
-
     const auto collect_size =   // Collects the size of the `j`'th partition.
         [&](const idx_t j)
         {
@@ -331,7 +329,6 @@ void Suffix_Array<T_idx_>::partition_sub_subarrays(const idx_t* const P)
 
 
     // Collate the sorted sub-subarrays to appropriate partitions.
-    part_ruler_ = allocate<idx_t>(p_ * (p_ + 1));
     const idx_t subarr_size = n_ / p_;
     const auto collate =    // Collates the `j`'th sub-subarray from each sorted subarray to partition `j`.
         [&](const idx_t j)
