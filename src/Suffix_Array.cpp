@@ -510,17 +510,25 @@ void Suffix_Array<T_idx_>::dump(std::ofstream& output)
 
 
 template <typename T_idx_>
-bool Suffix_Array<T_idx_>::is_sorted(const idx_t* const X, const idx_t n) const
+bool Suffix_Array<T_idx_>::is_sorted(const idx_t* const X, const idx_t* const L, const idx_t n) const
 {
+    if(L[0] != 0)
+        return false;
+
     for(idx_t i = 1; i < n; ++i)
     {
         const auto x = T_ + X[i - 1], y = T_ + X[i];
         const auto l = std::min(n_ - X[i - 1], n_ - X[i]);
 
-        for(idx_t i = 0; i < l; ++i)
-            if(x[i] < y[i])
+        for(idx_t j = 0; j < l; ++j)
+            if(x[j] < y[j])
+            {
+                if(L[i] != j)
+                    return false;
+
                 break;
-            else if(x[i] > y[i])
+            }
+            else if(x[j] > y[j])
                 return false;
     }
 
