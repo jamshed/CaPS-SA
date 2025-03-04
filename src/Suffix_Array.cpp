@@ -95,15 +95,17 @@ void Suffix_Array<T_idx_>::merge(const idx_t* X, idx_t len_x, const idx_t* Y, id
     }
 
 
-    for(; i < len_x; ++i, ++k)  // Copy rest of the data from X to Z.
-        Z[k] = X[i], LCP_z[k] = LCP_x[i];
+    // Copy rest of the data from X to Z.
+    std::memcpy(Z + k, X + i, (len_x - i) * sizeof(idx_t));
+    std::memcpy(LCP_z + k, LCP_x + i, (len_x - i) * sizeof(idx_t));
 
-    if(j < len_y)   // Copy rest of the data from Y to Z.
-    {
-        Z[k] = Y[j], LCP_z[k] = m;
-        for(j++, k++; j < len_y; ++j, ++k)
-            Z[k] = Y[j], LCP_z[k] = LCP_y[j];
-    }
+    // Copy rest of the data from Y to Z.
+    std::memcpy(Z + k, Y + j, (len_y - j) * sizeof(idx_t));
+    std::memcpy(LCP_z + k, LCP_y + j, (len_y - j) * sizeof(idx_t));
+
+    // Fix first copied LCP.
+    if(k < len_x + len_y)   // Both collections should not be empty.
+        LCP_z[k] = m;
 }
 
 
