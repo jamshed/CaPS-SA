@@ -231,10 +231,10 @@ inline T_idx_ Suffix_Array<T_idx_>::LCP_unrolled(const char* const x, const char
         return 0;
     else
     {
-        const auto v1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(x));
-        const auto v2 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(y));
-        const auto cmp = _mm256_cmpeq_epi8(v1, v2);
-        const auto mask = static_cast<uint32_t>(_mm256_movemask_epi8(cmp));
+        const auto v1 = simde_mm256_loadu_si256(reinterpret_cast<const simde__m256i*>(x));
+        const auto v2 = simde_mm256_loadu_si256(reinterpret_cast<const simde__m256i*>(y));
+        const auto cmp = simde_mm256_cmpeq_epi8(v1, v2);
+        const auto mask = static_cast<uint32_t>(simde_mm256_movemask_epi8(cmp));
         if(mask != 0xFFFFFFFF)
             return __builtin_ctz(~mask);
 
