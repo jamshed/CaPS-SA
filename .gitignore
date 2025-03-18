@@ -39,5 +39,5 @@ external/
 # Scripts
 scripts/
 
-# Julian Shun's SA library
-suffixTree
+# Miscellaneous
+.cache/

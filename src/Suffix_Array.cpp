@@ -21,34 +21,27 @@ Suffix_Array<T_idx_>::Suffix_Array(const char* const T, const idx_t n, const idx
     LCP_(allocate<idx_t>(n_)),
     SA_w(nullptr),
     LCP_w(nullptr),
-    p_(subproblem_count > 0 ? subproblem_count : default_subproblem_count),
+    p_(std::min(subproblem_count > 0 ? subproblem_count : default_subproblem_count, n / 16)),   // TODO: fix subproblem-count for small `n`.
     max_context(max_context ? max_context : n_),
     pivot_(nullptr),
-    pivot_per_part_(p_ - 1),
-    part_size_scan_(nullptr),
-    part_ruler_(nullptr)
+    pivot_per_part_(std::min(static_cast<idx_t>(std::ceil(32.0 * std::log(n_))), n_ / p_ - 1)), // (c \ln n) or (|subarray| - 1)
+    part_size_scan_(allocate<idx_t>(p_ + 1)),
+    part_ruler_(allocate<idx_t>(p_ * (p_ + 1)))
 {
-    if(p_ == 0)
+    assert(n_ >= 16);   // TODO: fix subproblem-count for small `n`.
+
+    if(p_ > n_)
     {
-        std::cerr << "The environment variable `PARLAY_NUM_THREADS` needs to be set. Aborting.\n";
+        std::cerr << "Incompatible subproblem-count. Aborting.\n";
         std::exit(EXIT_FAILURE);
     }
 }
 
 
 template <typename T_idx_>
-Suffix_Array<T_idx_>::Suffix_Array(const Suffix_Array& other): Suffix_Array(other.T_, other.n_)
-{
-    std::memcpy(SA_, other.SA_, n_ * sizeof(idx_t));
-    std::memcpy(LCP_, other.LCP_, n_ * sizeof(idx_t));
-}
-
-
-template <typename T_idx_>
 Suffix_Array<T_idx_>::~Suffix_Array()
 {
-    std::free(SA_);
-    std::free(LCP_);
+    deallocate(SA_), deallocate(LCP_);
 }
 
 
@@ -77,7 +70,7 @@ void Suffix_Array<T_idx_>::merge(const idx_t* X, idx_t len_x, const idx_t* Y, id
         {
             const idx_t max_n = n_ - std::max(X[i], Y[j]);  // Length of the shorter suffix.
             const idx_t context = std::min(max_context, max_n); // Prefix-context length for the suffixes.
-            const idx_t n = m + lcp_opt_avx(T_ + (X[i] + m), T_ + (Y[j] + m), context - m); // LCP(X_i, Y_j)
+            const idx_t n = m + LCP(T_ + (X[i] + m), T_ + (Y[j] + m), context - m); // LCP(X_i, Y_j)
 
             // Whether the shorter suffix is a prefix of the longer one.
             Z[k] = (n == max_n ?    std::max(X[i], Y[j]) :
@@ -102,15 +95,17 @@ void Suffix_Array<T_idx_>::merge(const idx_t* X, idx_t len_x, const idx_t* Y, id
     }
 
 
-    for(; i < len_x; ++i, ++k)  // Copy rest of the data from X to Z.
-        Z[k] = X[i], LCP_z[k] = LCP_x[i];
+    // Copy rest of the data from X to Z.
+    std::memcpy(Z + k, X + i, (len_x - i) * sizeof(idx_t));
+    std::memcpy(LCP_z + k, LCP_x + i, (len_x - i) * sizeof(idx_t));
 
-    if(j < len_y)   // Copy rest of the data from Y to Z.
-    {
-        Z[k] = Y[j], LCP_z[k] = m;
-        for(j++, k++; j < len_y; ++j, ++k)
-            Z[k] = Y[j], LCP_z[k] = LCP_y[j];
-    }
+    // Copy rest of the data from Y to Z.
+    std::memcpy(Z + k, Y + j, (len_y - j) * sizeof(idx_t));
+    std::memcpy(LCP_z + k, LCP_y + j, (len_y - j) * sizeof(idx_t));
+
+    // Fix first copied LCP.
+    if(k < len_x + len_y)   // Both collections should not be empty.
+        LCP_z[k] = m;
 }
 
 
@@ -151,14 +146,25 @@ void Suffix_Array<T_idx_>::initialize()
 
 
 template <typename T_idx_>
+void Suffix_Array<T_idx_>::permute()
+{
+    const auto t_s = now();
+
+    const auto populate = [&](const idx_t i){ SA_[i] = SA_w[i] = i; };
+    parlay::parallel_for(0, n_, populate);
+
+    const auto t_e = now();
+    std::cerr << "Populated the suffix array with a permutation. Time taken: " << duration(t_e - t_s) << " seconds.\n";
+}
+
+
+template <typename T_idx_>
 void Suffix_Array<T_idx_>::sort_subarrays()
 {
     const auto t_s = now();
 
-    const auto mem_init = [SA_ = SA_, SA_w = SA_w](const idx_t i){ SA_[i] = SA_w[i] = i; };
-    parlay::parallel_for(0, n_, mem_init);
-
     const auto subarr_size = n_ / p_;   // Size of each subarray to be sorted independently.
+    std::atomic_uint64_t solved_ = 0;   // Progress tracker—number of subproblems solved in some step.
     const auto sort_subarr =
         [&](const idx_t i)
         {
@@ -170,7 +176,6 @@ void Suffix_Array<T_idx_>::sort_subarrays()
                 std::cerr << "\rSorted " << solved_ << " subarrays.";
         };
 
-    solved_ = 0;
     parlay::parallel_for(0, p_, sort_subarr, 1);
     std::cerr << "\n";
 
@@ -182,7 +187,8 @@ void Suffix_Array<T_idx_>::sort_subarrays()
 template <typename T_idx_>
 void Suffix_Array<T_idx_>::sample_pivots(const idx_t* const X, const idx_t n, const idx_t m, idx_t* const P)
 {
-    const auto gap = n / (m + 1);   // Distance-gap between pivots.
+    assert(m <= n);
+    const auto gap = n / m; // Distance-gap between pivots.
     for(idx_t i = 0; i < m; ++i)
         P[i] = X[(i + 1) * gap - 1];
 }
@@ -193,12 +199,12 @@ void Suffix_Array<T_idx_>::select_pivots()
 {
     const auto t_s = now();
 
-    idx_t pivot_per_part_ = 32 * std::log(n_);  // c \ln n
     const auto sample_count = p_ * pivot_per_part_; // Total number of samples to select pivots from.
     idx_t* const pivot_w = allocate<idx_t>(sample_count);   // Working space to sample pivots.
     const auto subarr_size = n_ / p_;   // Size of each sorted subarray.
 
-    for(idx_t i = 0; i < p_; ++i)
+    assert(pivot_per_part_ < subarr_size);
+    for(idx_t i = 0; i < p_; ++i)   // TODO: parallelize?
         sample_pivots(  SA_ + i * subarr_size, subarr_size + (i < p_ - 1 ? 0 : n_ % p_),
                         pivot_per_part_, pivot_ + i * pivot_per_part_);
 
@@ -209,7 +215,7 @@ void Suffix_Array<T_idx_>::select_pivots()
 
     sample_pivots(pivot_w, sample_count, p_ - 1, pivot_);
 
-    std::free(pivot_w), std::free(temp_1), std::free(temp_2);
+    deallocate(pivot_w), deallocate(temp_1), deallocate(temp_2);
 
     const auto t_e = now();
     std::cerr << "Selected the global pivots. Time taken: " << duration(t_e - t_s) << " seconds.\n";
@@ -229,9 +235,11 @@ void Suffix_Array<T_idx_>::locate_pivots(idx_t* const P) const
             const auto X_i = SA_ + i * subarr_size; // The i'th subarray.
             const auto P_i = P + i * (p_ + 1);  // Pivot locations in `X_i` are to be placed in `P_i`.
 
-            P_i[0] = 0, P_i[p_] = subarr_size + (i < p_ - 1 ? 0 : n_ % p_); // The two flanking pivot indices.
+            const auto tot_subarr_size = subarr_size + (i < p_ - 1 ? 0 : n_ % p_);
+            P_i[0] = 0, P_i[p_] = tot_subarr_size; // The two flanking pivot indices.
+
             for(idx_t j = 0; j < p_ - 1; ++j) // TODO: try parallelizing this loop too; observe performance diff.
-                P_i[j + 1] = upper_bound(X_i, P_i[p_], T_ + pivot_[j], n_ - pivot_[j]);
+                P_i[j + 1] = upper_bound(X_i, tot_subarr_size, T_ + pivot_[j], n_ - pivot_[j]); // TODO: can shrink the search-range for successive searches.
         };
 
     parlay::parallel_for(0, p_, locate, 1);
@@ -244,27 +252,27 @@ void Suffix_Array<T_idx_>::locate_pivots(idx_t* const P) const
 template <typename T_idx_>
 T_idx_ Suffix_Array<T_idx_>::upper_bound(const idx_t* const X, const idx_t n, const char* const P, const idx_t P_len) const
 {
-    // Invariant: SA[l] < s < SA[r].
+    // Invariant: SA[l] < P < SA[r].
 
     int64_t l = -1, r = n;  // (Exclusive-) Range of the iterations in the binary search.
     idx_t c;    // Midpoint in each iteration.
     idx_t soln = n; // Solution of the search.
-    idx_t lcp_l = 0, lcp_r = 0; // LCP(s, SA[l]) and LCP(s, SA[r]).
-	idx_t approx = 65536;   // TODO: better tune and document.
+    idx_t lcp_l = 0, lcp_r = 0; // LCP(P, SA[l]) and LCP(P, SA[r]).
+	constexpr idx_t cutoff = 65536; // TODO: better tune and document.
 
     while(r - l > 1)    // Candidate matches exist.
     {
         c = (l + r) / 2;
-        const char* const suf = T_ + X[c];  // The suffix at the middle.
+        auto const suf = T_ + X[c]; // The suffix at the middle.
         const auto suf_len = n_ - X[c]; // Length of the suffix.
 
         idx_t lcp_c = std::min(lcp_l, lcp_r);   // LCP(X[c], P).
-        lcp_c = std::min(lcp_c, approx);   // LCP(X[c], P).
-        auto max_lcp = std::min(suf_len, P_len);  // Maximum possible LCP, i.e. length of the shorter string.
-		max_lcp = std::min(max_lcp,approx);
-        lcp_c += lcp_opt_avx(suf + lcp_c, P + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
+        lcp_c = std::min(lcp_c, cutoff);
+        auto max_lcp = std::min(std::min(suf_len, P_len), max_context); // Maximum possible LCP, i.e. length of the shorter string.
+        max_lcp = std::min(max_lcp, cutoff);
+        lcp_c += LCP(suf + lcp_c, P + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
 
-        if(lcp_c == max_lcp)    // One is a prefix of the other.
+        if(lcp_c == max_lcp)    // One is a prefix of the other, or they align at least up-to the context- or the cutoff-length.
         {
             if(lcp_c == P_len)  // P is a prefix of the suffix.
             {
@@ -274,9 +282,10 @@ T_idx_ Suffix_Array<T_idx_>::upper_bound(const idx_t* const X, const idx_t n, co
                     r = c, lcp_r = lcp_c, soln = c;
             }
             else    // The suffix is a prefix of the query, so X[c] < P; technically impossible if the text terminates with $.
+                    // Or, their relevant prefixes align; moving to the right, as searching for the upper-bound.
                 l = c, lcp_l = lcp_c;
         }
-        else    // Neither is a prefix of the other.
+        else    // They mismatch within their relevant prefixes.
             if(suf[lcp_c] < P[lcp_c])   // X[c] < P
                 l = c, lcp_l = lcp_c;
             else    // P < X[c]
@@ -293,8 +302,6 @@ void Suffix_Array<T_idx_>::partition_sub_subarrays(const idx_t* const P)
 {
     const auto t_s = now();
 
-    part_size_scan_ = allocate<idx_t>(p_ + 1);
-
     const auto collect_size =   // Collects the size of the `j`'th partition.
         [&](const idx_t j)
         {
@@ -310,28 +317,27 @@ void Suffix_Array<T_idx_>::partition_sub_subarrays(const idx_t* const P)
 
 
     // Compute inclusive-scan (prefix sum) of the partition sizes.
-    idx_t curr_sum = 0;
+    idx_t cur_sum = 0;
     for(idx_t j = 0; j < p_; ++j) // For partition `j`.
     {
         const auto part_size = part_size_scan_[j];
 
-        part_size_scan_[j] = curr_sum;
-        curr_sum += part_size;
+        part_size_scan_[j] = cur_sum;
+        cur_sum += part_size;
     }
 
-    part_size_scan_[p_] = curr_sum;
+    part_size_scan_[p_] = cur_sum;
     assert(part_size_scan_[p_] == n_);
 
 
     // Collate the sorted sub-subarrays to appropriate partitions.
-    part_ruler_ = allocate<idx_t>(p_ * (p_ + 1));
     const idx_t subarr_size = n_ / p_;
     const auto collate =    // Collates the `j`'th sub-subarray from each sorted subarray to partition `j`.
         [&](const idx_t j)
         {
             auto const Y_j = SA_w + part_size_scan_[j]; // Memory-base for partition `j`.
             auto const LCP_Y_j = LCP_w + part_size_scan_[j];    // Memory-base for LCPs of partition `j`.
-            auto const sub_subarr_idx = part_ruler_ + j * (p_ + 1); // Index of the sorted sub-subarrays in `Y_j`.
+            auto const sub_subarr_off = part_ruler_ + j * (p_ + 1); // Offset of the sorted sub-subarrays in `Y_j`.
             idx_t curr_idx = 0; // Current index into `Y_j`.
 
             for(idx_t i = 0; i < p_; ++i)   // Subarray `i`.
@@ -340,15 +346,18 @@ void Suffix_Array<T_idx_>::partition_sub_subarrays(const idx_t* const P)
                 const auto LCP_X_i = LCP_ + i * subarr_size;    // LCP array of `X_i`.
                 const auto P_i = P + i * (p_ + 1);  // Pivot collection of subarray `i`.
 
+                sub_subarr_off[i] = curr_idx;
                 const auto sub_subarr_size = P_i[j + 1] - P_i[j];   // Size of the `j`'th sub-subarray of subarray `i`.
-                sub_subarr_idx[i] = curr_idx;
-                std::memcpy(Y_j + sub_subarr_idx[i], X_i + P_i[j], sub_subarr_size * sizeof(idx_t));
-                std::memcpy(LCP_Y_j + sub_subarr_idx[i], LCP_X_i + P_i[j], sub_subarr_size * sizeof(idx_t));
-                LCP_Y_j[sub_subarr_idx[i]] = 0;
+                if(sub_subarr_size == 0)
+                    continue;
+
+                std::memcpy(Y_j + sub_subarr_off[i], X_i + P_i[j], sub_subarr_size * sizeof(idx_t));
+                std::memcpy(LCP_Y_j + sub_subarr_off[i], LCP_X_i + P_i[j], sub_subarr_size * sizeof(idx_t));
+                LCP_Y_j[sub_subarr_off[i]] = 0;
                 curr_idx += sub_subarr_size;
             }
 
-            sub_subarr_idx[p_] = curr_idx;
+            sub_subarr_off[p_] = curr_idx;
             assert(curr_idx == part_size_scan_[j + 1] - part_size_scan_[j]);
         };
 
@@ -364,7 +373,7 @@ void Suffix_Array<T_idx_>::merge_sub_subarrays()
 {
     const auto t_s = now();
 
-    const auto mem_init =
+    const auto dup =    // Duplicates the `j`'th partition.
         [&](const idx_t j)
         {
             const auto part_size = part_size_scan_[j + 1] - part_size_scan_[j];
@@ -372,26 +381,26 @@ void Suffix_Array<T_idx_>::merge_sub_subarrays()
             std::memcpy(LCP_ + part_size_scan_[j], LCP_w + part_size_scan_[j], part_size * sizeof(idx_t));
         };
 
-    parlay::parallel_for(0, p_, mem_init, 1);   // Fulfill `sort_partition`'s precondition.
+    parlay::parallel_for(0, p_, dup, 1);    // Fulfill `sort_partition`'s precondition.
 
 
+    std::atomic_uint64_t solved_ = 0;   // Progress tracker—number of subproblems solved in some step.
     const auto sort_part =
         [&](const idx_t j)
         {
-            const auto part_idx = part_size_scan_[j];   // Index of the partition in the partitions' flat collection.
-            auto const X_j = SA_w + part_idx;   // Memory-base for partition `j`.
-            auto const Y_j = SA_ + part_idx;    // Location to sort partition `j`.
-            auto const LCP_X_j = LCP_w + part_idx;  // Memory-base for the LCP-arrays of partition `j`.
-            auto const LCP_Y_j = LCP_ + part_idx;   // LCP array of `Y_j`.
-            auto const sub_subarr_idx = part_ruler_ + j * (p_ + 1); // Indices of the sorted subarrays in `X_i`.
+            const auto part_off = part_size_scan_[j];   // Offset of the partition in the partitions' flat collection.
+            auto const X_j = SA_w + part_off;   // Memory-base for partition `j`.
+            auto const Y_j = SA_ + part_off;    // Location to sort partition `j`.
+            auto const LCP_X_j = LCP_w + part_off;  // Memory-base for the LCP-arrays of partition `j`.
+            auto const LCP_Y_j = LCP_ + part_off;   // LCP array of `Y_j`.
+            auto const sub_subarr_off = part_ruler_ + j * (p_ + 1); // Indices of the sorted subarrays in `X_i`.
 
-            sort_partition(X_j, Y_j, p_, sub_subarr_idx, LCP_X_j, LCP_Y_j);
+            sort_partition(X_j, Y_j, p_, sub_subarr_off, LCP_X_j, LCP_Y_j);
 
             if(++solved_ % 8 == 0)
                 std::cerr << "\rMerged " << solved_ << " partitions.";
         };
 
-    solved_ = 0;
     parlay::parallel_for(0, p_, sort_part, 1);  // Merge the sorted subarrays in each partitions.
     std::cerr << "\n";
 
@@ -427,8 +436,8 @@ void Suffix_Array<T_idx_>::compute_partition_boundary_lcp()
     const auto compute_boundary_lcp =
         [&](const idx_t j)
         {
-          const auto part_idx = part_size_scan_[j];
-          LCP_[part_idx] = lcp_opt_avx(T_ + SA_[part_idx - 1], T_ + SA_[part_idx], n_ - std::max(SA_[part_idx - 1], SA_[part_idx]));
+            const auto part_idx = part_size_scan_[j];
+            LCP_[part_idx] = LCP(T_ + SA_[part_idx - 1], T_ + SA_[part_idx], n_ - std::max(SA_[part_idx - 1], SA_[part_idx]));
         };
 
     parlay::parallel_for(1, p_, compute_boundary_lcp, 1);
@@ -443,12 +452,11 @@ void Suffix_Array<T_idx_>::clean_up()
 {
     const auto t_s = now();
 
-    std::free(SA_w);
-    std::free(LCP_w);
+    deallocate(SA_w), deallocate(LCP_w);
 
-    std::free(pivot_);
-    std::free(part_size_scan_);
-    std::free(part_ruler_);
+    deallocate(pivot_);
+    deallocate(part_size_scan_);
+    deallocate(part_ruler_);
 
     const auto t_e = now();
     std::cerr << "Released the temporary data structures. Time taken: " << duration(t_e - t_s) << " seconds.\n";
@@ -462,7 +470,10 @@ void Suffix_Array<T_idx_>::construct()
 
     initialize();
 
+    permute();
+
     // merge_sort(SA_w, SA_, n_, LCP_, LCP_w);  // Monolithic construction.
+
     sort_subarrays();
 
     select_pivots();
@@ -470,7 +481,7 @@ void Suffix_Array<T_idx_>::construct()
     idx_t* const P = allocate<idx_t>(p_ * (p_ + 1));  // Collection of pivot locations in the subarrays.
     locate_pivots(P);
     partition_sub_subarrays(P);
-    std::free(P);
+    deallocate(P);
 
     merge_sub_subarrays();
 
@@ -499,17 +510,25 @@ void Suffix_Array<T_idx_>::dump(std::ofstream& output)
 
 
 template <typename T_idx_>
-bool Suffix_Array<T_idx_>::is_sorted(const idx_t* const X, const idx_t n) const
+bool Suffix_Array<T_idx_>::is_sorted(const idx_t* const X, const idx_t* const L, const idx_t n) const
 {
+    if(L[0] != 0)
+        return false;
+
     for(idx_t i = 1; i < n; ++i)
     {
         const auto x = T_ + X[i - 1], y = T_ + X[i];
         const auto l = std::min(n_ - X[i - 1], n_ - X[i]);
 
-        for(idx_t i = 0; i < l; ++i)
-            if(x[i] < y[i])
+        for(idx_t j = 0; j < l; ++j)
+            if(x[j] < y[j])
+            {
+                if(L[i] != j)
+                    return false;
+
                 break;
-            else if(x[i] > y[i])
+            }
+            else if(x[j] > y[j])
                 return false;
     }
 
