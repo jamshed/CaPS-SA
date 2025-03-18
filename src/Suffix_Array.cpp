@@ -70,7 +70,7 @@ void Suffix_Array<T_idx_>::merge(const idx_t* X, idx_t len_x, const idx_t* Y, id
         {
             const idx_t max_n = n_ - std::max(X[i], Y[j]);  // Length of the shorter suffix.
             const idx_t context = std::min(max_context, max_n); // Prefix-context length for the suffixes.
-            const idx_t n = m + lcp_opt_avx_unrolled(T_ + (X[i] + m), T_ + (Y[j] + m), context - m); // LCP(X_i, Y_j)
+            const idx_t n = m + LCP(T_ + (X[i] + m), T_ + (Y[j] + m), context - m); // LCP(X_i, Y_j)
 
             // Whether the shorter suffix is a prefix of the longer one.
             Z[k] = (n == max_n ?    std::max(X[i], Y[j]) :
@@ -270,7 +270,7 @@ T_idx_ Suffix_Array<T_idx_>::upper_bound(const idx_t* const X, const idx_t n, co
         lcp_c = std::min(lcp_c, cutoff);
         auto max_lcp = std::min(std::min(suf_len, P_len), max_context); // Maximum possible LCP, i.e. length of the shorter string.
         max_lcp = std::min(max_lcp, cutoff);
-        lcp_c += lcp_opt_avx_unrolled(suf + lcp_c, P + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
+        lcp_c += LCP(suf + lcp_c, P + lcp_c, max_lcp - lcp_c);  // Skip an informed number of character comparisons.
 
         if(lcp_c == max_lcp)    // One is a prefix of the other, or they align at least up-to the context- or the cutoff-length.
         {
@@ -436,8 +436,8 @@ void Suffix_Array<T_idx_>::compute_partition_boundary_lcp()
     const auto compute_boundary_lcp =
         [&](const idx_t j)
         {
-          const auto part_idx = part_size_scan_[j];
-          LCP_[part_idx] = lcp_opt_avx_unrolled(T_ + SA_[part_idx - 1], T_ + SA_[part_idx], n_ - std::max(SA_[part_idx - 1], SA_[part_idx]));
+            const auto part_idx = part_size_scan_[j];
+            LCP_[part_idx] = LCP(T_ + SA_[part_idx - 1], T_ + SA_[part_idx], n_ - std::max(SA_[part_idx - 1], SA_[part_idx]));
         };
 
     parlay::parallel_for(1, p_, compute_boundary_lcp, 1);

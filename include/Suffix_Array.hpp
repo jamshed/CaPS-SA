@@ -5,7 +5,7 @@
 
 
 #include <cstdint>
-#include <atomic>
+#include <cstddef>
 #include <cstdlib>
 #include <fstream>
 #include <chrono>
@@ -64,6 +64,15 @@ private:
     // the shorter of `x` and `y`. Optimized with some poor man's vectorization.
     // NOTE: hand unrolled version of `lcp_opt_avx`.
     static idx_t lcp_opt_avx_unrolled(const char* x, const char* y, idx_t min_len);
+
+    // Returns the LCP length of `x` and `y`, where `min_len` is the length of
+    // the shorter of `x` and `y`. `N x 32` bytes of prefix comparisons are
+    // loop-unrolled.
+    template <std::size_t N = 8>
+    static idx_t LCP(const char* x, const char* y, idx_t min_len);
+
+    // Returns the LCP length of the `32 x N`-bytes prefix of `x` and `y`.
+    template <std::size_t N> static idx_t LCP_unrolled(const char* x, const char* y);
 
     // Merges the sorted collections of suffixes, `X` and `Y`, with lengths
     // `len_x` and `len_y` and LCP arrays `LCP_x` and `LCP_y` respectively, into
@@ -182,113 +191,53 @@ inline T_idx_ Suffix_Array<T_idx_>::lcp(const char* const x, const char* const y
     return l;
 }
 
-#define LCPCMP(N, IDX_T) \
-      __m256i v1 ## N = _mm256_loadu_si256((__m256i*)(str1 + i + N));\
-      __m256i v2 ## N = _mm256_loadu_si256((__m256i*)(str2 + i + N));\
-      __m256i cmp ## N = _mm256_cmpeq_epi8(v1##N, v2##N);\
-      int mask ## N = _mm256_movemask_epi8(cmp##N);\
-      if (mask ## N != static_cast<int>(0xFFFFFFFF)) {\
-        int j = __builtin_ctz(~mask ## N) + i + N;\
-        return static_cast<IDX_T>(j);\
-      } 
-
-#define M_REPEAT_1(X, T) X(0, T)
-#define M_REPEAT_2(X, T) X(0, T) X(32, T)
-#define M_REPEAT_3(X, T) M_REPEAT_2(X, T) X(64, T)
-#define M_REPEAT_4(X, T) M_REPEAT_3(X, T) X(96, T)
-#define M_REPEAT_5(X, T) M_REPEAT_4(X, T) X(128, T)
-#define M_REPEAT_6(X, T) M_REPEAT_5(X, T) X(160, T)
-#define M_REPEAT_7(X, T) M_REPEAT_6(X, T) X(192, T)
-#define M_REPEAT_8(X, T) M_REPEAT_7(X, T) X(224, T)
 
 template <typename T_idx_>
-inline T_idx_ Suffix_Array<T_idx_>::lcp_opt_avx_unrolled(const char* str1, const char* str2, const idx_t len_in) {
-  int64_t i = 0;
-  int64_t len = static_cast<int64_t>(len_in);
-
-  if ((len - i)>= 160) {
-    for (; i <= len - 160; i += 160) {
-      M_REPEAT_5(LCPCMP, idx_t);
-    } 
-  }
-
-  if ((len - i)>= 128) {
-    for (; i <= len - 128; i += 128) {
-      M_REPEAT_4(LCPCMP, idx_t);
-    } 
-  }
-
-  if ((len - i)>= 96) {
-    for (; i <= len - 96; i += 96) {
-      M_REPEAT_3(LCPCMP, idx_t);
-    }
-  }
-
-  if ((len - i)>= 64) {
-    for (; i <= len - 64; i += 64) {
-      M_REPEAT_2(LCPCMP, idx_t);
-    }
-  }
-
-  if ((len - i) >= 32) {
-    for (; i <= len - 32; i += 32) {
-      __m256i v1 = _mm256_loadu_si256((__m256i*)(str1 + i));
-      __m256i v2 = _mm256_loadu_si256((__m256i*)(str2 + i));
-      __m256i cmp = _mm256_cmpeq_epi8(v1, v2);
-      int mask = _mm256_movemask_epi8(cmp);
-      if (mask != static_cast<int>(0xFFFFFFFF)) {
-        int j = __builtin_ctz(~mask) + i;
-        return static_cast<idx_t>(j);
-      }
-    }
-  }
-
-  for (; i < len; i++) {
-    if (str1[i] != str2[i]) {
-      break;
-    }
-  }
-
-  return static_cast<idx_t>(i);
-}
-
-template <typename T_idx_>
-inline T_idx_ Suffix_Array<T_idx_>::lcp_opt_avx(const char* str1, const char* str2, const idx_t len_in) {
-  int64_t i = 0;
-  int64_t len = static_cast<int64_t>(len_in);
-  if (len >= 32) {
-    for (; i <= len - 32; i += 32) {
-      __m256i v1 = _mm256_loadu_si256((__m256i*)(str1 + i));
-      __m256i v2 = _mm256_loadu_si256((__m256i*)(str2 + i));
-      __m256i cmp = _mm256_cmpeq_epi8(v1, v2);
-      int mask = _mm256_movemask_epi8(cmp);
-      if (mask != static_cast<int>(0xFFFFFFFF)) {
-        int j = __builtin_ctz(~mask) + i;
-        return static_cast<idx_t>(j);
-      }
-    }
-  }
-  for (; i < len; i++) {
-    if (str1[i] != str2[i]) {
-      break;
-    }
-  }
-  return static_cast<idx_t>(i);
-}
-
-
-template <typename T_idx_>
-inline T_idx_ Suffix_Array<T_idx_>::lcp_opt(const char* const x, const char* const y, const idx_t min_len)
+template <std::size_t N>
+inline T_idx_ Suffix_Array<T_idx_>::LCP(const char* const x, const char* const y, const idx_t min_len)
 {
-    auto const X = reinterpret_cast<const uint64_t*>(x);
-    auto const Y = reinterpret_cast<const uint64_t*>(y);
-    const auto word_count = (min_len >> 3);
+    idx_t lcp = 0;
 
-    idx_t i = 0;
-    while(i < word_count && X[i] == Y[i])
-        i++;
+    if constexpr(N == 1)
+    {
+        for(; lcp < min_len; ++lcp)
+            if(x[lcp] != y[lcp])
+                break;
 
-    return (i << 3) + lcp(x + (i << 3), y + (i << 3), min_len - (i << 3));
+        return lcp;
+    }
+    else
+    {
+        while((min_len - lcp) >= N * 32)
+        {
+            const auto l = LCP_unrolled<N>(x + lcp, y + lcp);
+            lcp += l;
+            if(l < N * 32)
+                return lcp;
+        }
+
+        return lcp + LCP<N - 1>(x + lcp, y + lcp, min_len - lcp);
+    }
+}
+
+
+template <typename T_idx_>
+template <std::size_t N>
+inline T_idx_ Suffix_Array<T_idx_>::LCP_unrolled(const char* const x, const char* const y)
+{
+    if constexpr(N == 0)
+        return 0;
+    else
+    {
+        const auto v1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(x));
+        const auto v2 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(y));
+        const auto cmp = _mm256_cmpeq_epi8(v1, v2);
+        const auto mask = static_cast<uint32_t>(_mm256_movemask_epi8(cmp));
+        if(mask != 0xFFFFFFFF)
+            return __builtin_ctz(~mask);
+
+        return 32 + LCP_unrolled<N - 1>(x + 32, y + 32);
+    }
 }
 
 }
